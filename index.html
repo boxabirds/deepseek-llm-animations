@@ -25,18 +25,34 @@
       text-align: center;
       z-index: 10;
     }
-    #query-text {
-      font-size: 2.5em;
-      color: #00ffff;
-      text-shadow: 0 0 10px rgba(0, 255, 255, 0.7);
-      opacity: 0;
+    #query-container {
+      display: inline-block;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #00ffff;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+      border-radius: 4px;
     }
-    #progress-bar {
-      width: 0%;
-      height: 2px;
+    #query-text {
+      font-size: 2em;
+      color: #00ffff;
+      text-shadow: 0 0 5px rgba(0, 255, 255, 0.7);
+      opacity: 1;
+      margin: 0;
+      min-width: 300px;
+      text-align: left;
+    }
+    #cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1.2em;
       background: #00ffff;
-      margin: 20px auto;
-      transition: width 0.1s;
+      animation: blink 1s infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
@@ -44,8 +60,9 @@
 <body>
   <div id="canvas-container"></div>
   <div id="ui">
-    <div id="query-text"></div>
-    <div id="progress-bar"></div>
+    <div id="query-container">
+      <p id="query-text"></p><span id="cursor"></span>
+    </div>
   </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.11.4/dist/gsap.min.js"></script>
