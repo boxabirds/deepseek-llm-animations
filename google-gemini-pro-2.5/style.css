@@ -7,7 +7,7 @@
 html, body {
     height: 100%;
     width: 100%;
-    overflow: hidden; /* Prevent scrollbars during zoom */
+    overflow: hidden; /* Prevent scrollbars */
     font-family: 'Courier New', Courier, monospace; /* Monospace font */
 }
 
@@ -74,7 +74,7 @@ html, body {
     font-size: 1.2rem;
     box-shadow: 0 0 20px rgba(68, 119, 170, 0.6);
     opacity: 0; /* Start hidden */
-    transform: scale(0.1); /* Start small for zoom-in */
+    /* transform: scale(0.1); */ /* Removed initial scale */
     transform-origin: center center;
     max-width: 80%;
 }
@@ -97,6 +97,6 @@ html, body {
     border-radius: 4px;
     box-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
     opacity: 0; /* Start hidden */
-    transform: scale(0.2); /* Start small for transition */
+    /* transform: scale(0.2); */ /* Removed initial scale */
     transform-origin: center center;
 }
