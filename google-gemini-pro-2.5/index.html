@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Query Animation - Scene 1</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="scene-container">
+        <!-- Initial Text Box -->
+        <div class="text-box">
+            <span id="query-text"></span><span class="cursor">|</span>
+        </div>
+
+        <!-- JSON Representation (Initially Hidden) -->
+        <div class="json-view">
+            <pre><code>{
+  "user_input": "Capital of France?"
+}</code></pre>
+        </div>
+
+        <!-- Final User Message Box (Initially Hidden) -->
+        <div class="user-message-box">
+            User Message
+        </div>
+    </div>
+
+    <!-- Include GSAP Core and TextPlugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/TextPlugin.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
