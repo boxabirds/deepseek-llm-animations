@@ -16,8 +16,21 @@
         }
 
         .container {
-            width: 85%; /* Slightly wider for matrix */
+            width: 85%;
             max-width: 900px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 5px; /* Reduced margin */
+        }
+
+        .model-subtitle { /* Style for the new subtitle */
+            text-align: center;
+            font-size: 0.9em;
+            color: #555;
+            margin-bottom: 20px;
+            font-style: italic;
         }
 
         .input-area {
@@ -79,7 +92,18 @@
             margin-top: 0;
             text-align: center;
             color: #555;
-            margin-bottom: 10px;
+            margin-bottom: 5px; /* Reduced margin */
+        }
+
+        /* New style for stats labels */
+        .stats-label {
+            font-size: 0.75em;
+            color: #666;
+            display: block;
+            text-align: center;
+            margin-top: 3px;
+            margin-bottom: 8px;
+            line-height: 1.2; /* Prevent overlap */
         }
 
         .box-content {
@@ -136,11 +160,11 @@
             padding: 10px;
             border-radius: 4px;
             text-align: center;
-            flex: 1; /* Equal initial space */
-            position: relative; /* For pseudo-elements */
+            flex: 1;
+            position: relative;
             transition: background-color 0.2s, transform 0.2s;
             display: flex;
-            flex-direction: column; /* Stack title and content */
+            flex-direction: column;
         }
 
         .transformer-part h4 {
@@ -150,16 +174,16 @@
         }
 
         #attention {
-            flex-basis: 50%; /* Give attention slightly more space for matrix */
-            overflow: auto; /* Allow scrolling if matrix is huge */
+            flex-basis: 50%;
+            overflow: auto;
         }
 
         #ffn {
             flex-basis: 50%;
-            background-color: #f8f9fa; /* Slightly different background */
+            background-color: #f8f9fa;
         }
 
-        #ffn::before { /* Visual cue for density */
+        #ffn::before {
              content: '';
              position: absolute;
              inset: 5px;
@@ -174,8 +198,9 @@
              z-index: 0;
              border-radius: 4px;
         }
-         #ffn h4, #ffn .complexity-label {
-            position: relative; /* Ensure text is above the pattern */
+         /* Ensure text is above the pattern */
+         #ffn h4, #ffn .complexity-label, #ffn .stats-label {
+            position: relative;
             z-index: 1;
          }
 
@@ -190,37 +215,41 @@
 
         #ffn .complexity-label {
              color: #007bff; /* Blue color for FFN */
+             margin-bottom: 3px; /* Space before stats */
         }
+        #attention .complexity-label {
+            margin-bottom: 3px; /* Space before stats */
+        }
+
 
         /* Attention Matrix Styles */
         .attention-matrix-container {
-            flex-grow: 1; /* Take available space */
+            flex-grow: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 10px;
+            margin-top: 5px; /* Reduced top margin */
             padding: 5px;
-            overflow: hidden; /* Hide overflowing labels if too small */
+            overflow: hidden;
         }
         .attention-matrix {
             display: grid;
-            /* grid-template-columns and rows set by JS */
             gap: 1px;
-            background-color: #ccc; /* Grid lines */
+            background-color: #ccc;
             border: 1px solid #ccc;
-            font-size: 0.6em; /* Smaller font for matrix */
+            font-size: 0.6em;
             max-width: 100%;
             max-height: 100%;
-            overflow: hidden; /* Prevent content spillover */
+            overflow: hidden;
         }
         .matrix-cell, .matrix-header, .matrix-corner {
             background-color: #fff;
-            padding: 1px; /* Minimal padding */
+            padding: 1px;
             text-align: center;
             overflow: hidden;
             white-space: nowrap;
-            text-overflow: ellipsis; /* Hide overflow text */
-            min-width: 15px; /* Minimum cell size */
+            text-overflow: ellipsis;
+            min-width: 15px;
             min-height: 15px;
             display: flex;
             justify-content: center;
@@ -230,45 +259,40 @@
          .matrix-header {
              background-color: #f0f0f0;
              font-weight: bold;
-             writing-mode: vertical-lr; /* Vertical Row Headers */
+             writing-mode: vertical-lr;
              text-orientation: mixed;
          }
-         .matrix-header.col { /* Column headers normal orientation */
+         .matrix-header.col {
              writing-mode: horizontal-tb;
              text-orientation: mixed;
          }
          .matrix-cell {
-            background-color: #e9f5ff; /* Light blue base */
+            background-color: #e9f5ff;
             transition: background-color 0.1s ease-out;
          }
          .matrix-cell.flashing {
-             background-color: #ffc107; /* Yellow flash */
+             background-color: #ffc107;
              animation: flash-cell 0.3s ease-out forwards;
          }
          @keyframes flash-cell {
-            0% { background-color: #ffc107; } /* Start bright yellow */
-            100% { background-color: #90caf9; } /* End slightly darker blue */
+            0% { background-color: #ffc107; }
+            100% { background-color: #90caf9; }
          }
 
 
         /* --- Animations --- */
-
         .highlight {
             border-color: #007bff;
             background-color: #e7f3ff;
         }
-
         .processing {
-            /* Optional: slightly different pulse for main box */
              animation: pulse-box 1s infinite alternate;
         }
          @keyframes pulse-box {
             from { background-color: #e7f3ff; }
             to { background-color: #d0e7ff; }
         }
-
-
-        .transformer-part.processing-border { /* Renamed to avoid conflict */
+        .transformer-part.processing-border {
              animation: pulse-border 0.5s infinite alternate;
              transform: scale(1.02);
         }
@@ -276,29 +300,23 @@
             from { box-shadow: 0 0 0px 0px rgba(0, 123, 255, 0.5); }
             to { box-shadow: 0 0 5px 3px rgba(0, 123, 255, 0.5); }
         }
-
-
-        /* Used to animate items flowing between boxes */
         .flow-item {
             position: absolute;
             z-index: 10;
             transition: top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out;
         }
-
         .status-subtitle {
             text-align: center;
-            margin-top: 5px; /* Adjusted margin */
+            margin-top: 5px;
             font-style: italic;
             color: #666;
-            height: 1.2em; /* Reserve space */
-            position: relative; /* Keep in flow */
+            height: 1.2em;
+            position: relative;
             width: 100%;
         }
-        /* Specific margin for transformer status to push it down */
         #transformerBox .status-subtitle {
              margin-top: 15px;
         }
-
 
     </style>
 </head>
@@ -306,6 +324,8 @@
 
     <div class="container">
         <h1>Transformer Flow</h1>
+        <!-- Added Subtitle -->
+        <p class="model-subtitle">Example for ~1 Billion Parameter Model</p>
 
         <div class="input-area">
             <input type="text" id="inputText" value="The Capital of France is">
@@ -316,6 +336,7 @@
 
         <div class="box" id="tokenizerBox">
             <h3>Tokenizer</h3>
+            <!-- No specific stats for basic tokenizer in this context -->
             <div class="box-content" id="tokenizerContent"></div>
             <div class="status-subtitle" id="tokenizerStatus"></div>
         </div>
@@ -324,8 +345,10 @@
 
         <div class="box" id="embeddingBox">
             <h3>Embeddings</h3>
-             <div class="box-content" id="embeddingContent"></div>
-             <div class="status-subtitle" id="embeddingStatus"></div>
+            <!-- Added Stats Label -->
+            <div class="stats-label">(78M Params | ~1% Compute | ~1% Time)</div>
+            <div class="box-content" id="embeddingContent"></div>
+            <div class="status-subtitle" id="embeddingStatus"></div>
         </div>
 
         <div class="flow-arrow" id="arrow3">↓</div>
@@ -336,26 +359,29 @@
                 <div class="transformer-part" id="attention">
                     <h4>Attention</h4>
                     <span class="complexity-label">(O(n²))</span>
+                    <!-- Added Stats Label -->
+                    <div class="stats-label">(302M Params | ~63% Compute | ~55% Time)</div>
                     <div class="attention-matrix-container">
-                         <div id="attentionMatrix" class="attention-matrix">
-                             <!-- Matrix will be generated here -->
-                         </div>
+                         <div id="attentionMatrix" class="attention-matrix"></div>
                      </div>
                 </div>
                 <div class="transformer-part" id="ffn">
                     <h4>Feed-Forward</h4>
                     <span class="complexity-label">(Billions of Parameters)</span>
+                     <!-- Added Stats Label -->
+                    <div class="stats-label">(604M Params | ~36% Compute | ~44% Time)</div>
+                    <!-- Placeholder for FFN internal visual density (handled by ::before) -->
                 </div>
             </div>
-            <!-- Status moved below internal parts -->
             <div class="status-subtitle" id="transformerStatus"></div>
         </div>
 
         <div class="flow-arrow" id="arrow4">↓</div>
 
-        <!-- Renamed Box -->
         <div class="box" id="outputPredictionBox">
             <h3>Output Prediction</h3>
+            <!-- Often includes a final linear layer + softmax, params usually part of "FFN" or smaller -->
+             <div class="stats-label">(Small params | Negligible compute/time)</div>
             <div class="box-content" id="outputPredictionContent"></div>
              <div class="status-subtitle" id="outputPredictionStatus"></div>
         </div>
@@ -371,6 +397,10 @@
 
 
     <script>
+        // === JAVASCRIPT (No changes needed from the previous version) ===
+        // All the logic for animation, matrix generation, etc., remains the same.
+        // The new labels are static HTML/CSS elements.
+
         const inputText = document.getElementById('inputText');
         const processButton = document.getElementById('processButton');
         const tokenizerBox = document.getElementById('tokenizerBox');
@@ -381,7 +411,6 @@
         const attentionPart = document.getElementById('attention');
         const attentionMatrixDiv = document.getElementById('attentionMatrix');
         const ffnPart = document.getElementById('ffn');
-        // Renamed elements
         const outputPredictionBox = document.getElementById('outputPredictionBox');
         const outputPredictionContent = document.getElementById('outputPredictionContent');
         const outputPredictionStatus = document.getElementById('outputPredictionStatus');
@@ -399,69 +428,49 @@
             tokenizer: document.getElementById('tokenizerStatus'),
             embedding: document.getElementById('embeddingStatus'),
             transformer: document.getElementById('transformerStatus'),
-            output: outputPredictionStatus // Updated status reference
+            output: outputPredictionStatus
         }
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-        // --- Animation Helper (No changes needed here) ---
         function createFlowItem(elementToClone, startElement, endElement) {
-             // ... (same as before) ...
              const item = elementToClone.cloneNode(true);
-             item.style.opacity = '1'; // Make it visible for animation
+             item.style.opacity = '1';
              item.classList.add('flow-item');
              document.body.appendChild(item);
-
              const startRect = startElement.getBoundingClientRect();
              const endRect = endElement.getBoundingClientRect();
-
-             // Start position (relative to viewport)
-             item.style.position = 'fixed'; // Use fixed for viewport positioning
+             item.style.position = 'fixed';
              item.style.top = `${startRect.top + startRect.height / 2 - item.offsetHeight / 2}px`;
              item.style.left = `${startRect.left + startRect.width / 2 - item.offsetWidth / 2}px`;
-             item.style.transition = 'top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Ensure transition is set
-
-             // Trigger reflow to apply start position before transition
+             item.style.transition = 'top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out';
               void item.offsetWidth;
-
-             // End position
               setTimeout(() => {
                   item.style.top = `${endRect.top + endRect.height / 2 - item.offsetHeight / 2}px`;
                   item.style.left = `${endRect.left + endRect.width / 2 - item.offsetWidth / 2}px`;
-                  item.style.opacity = '0'; // Fade out at destination
-              }, 50); // Small delay seems to help consistency
-
-             // Remove the item after animation
+                  item.style.opacity = '0';
+              }, 50);
              setTimeout(() => {
                  item.remove();
-             }, 900); // Should be slightly longer than transition duration
+             }, 900);
         }
 
-        // --- Attention Matrix Generation ---
         function createAttentionMatrix(tokens) {
-            attentionMatrixDiv.innerHTML = ''; // Clear previous matrix
+            attentionMatrixDiv.innerHTML = '';
             const n = tokens.length;
             if (n === 0) return;
-
-            // Set CSS Grid properties
             attentionMatrixDiv.style.gridTemplateColumns = `auto repeat(${n}, minmax(15px, 1fr))`;
             attentionMatrixDiv.style.gridTemplateRows = `auto repeat(${n}, minmax(15px, 1fr))`;
-
-             // Add corner placeholder
              const corner = document.createElement('div');
              corner.className = 'matrix-corner';
              attentionMatrixDiv.appendChild(corner);
-
-             // Add column headers
              for (let j = 0; j < n; j++) {
                  const header = document.createElement('div');
                  header.className = 'matrix-header col';
                  header.textContent = tokens[j];
-                 header.title = tokens[j]; // Tooltip for long tokens
+                 header.title = tokens[j];
                  attentionMatrixDiv.appendChild(header);
              }
-
-            // Add row headers and cells
              for (let i = 0; i < n; i++) {
                  const header = document.createElement('div');
                  header.className = 'matrix-header row';
@@ -471,13 +480,12 @@
                  for (let j = 0; j < n; j++) {
                      const cell = document.createElement('div');
                      cell.className = 'matrix-cell';
-                     cell.id = `cell-${i}-${j}`; // ID for animation targeting
+                     cell.id = `cell-${i}-${j}`;
                      attentionMatrixDiv.appendChild(cell);
                  }
              }
         }
 
-        // --- Attention Matrix Animation ---
         async function animateAttentionMatrix(n) {
             const cells = [];
             for (let i = 0; i < n; i++) {
@@ -486,18 +494,14 @@
                     if (cell) cells.push(cell);
                 }
             }
-
-            // Simple sequential flash animation
-            const delay = Math.max(10, Math.min(50, 1500 / (n * n))); // Adjust speed based on size
+            const delay = Math.max(10, Math.min(50, 1500 / (n * n)));
             for (let i = 0; i < cells.length; i++) {
-                cells[i].classList.add('flashing');
-                // Keep flash brief
+                 cells[i].classList.add('flashing');
                  setTimeout(() => {
                      if (cells[i]) cells[i].classList.remove('flashing');
-                 }, 300); // Match CSS animation duration
+                 }, 300);
                 await sleep(delay);
             }
-             // Ensure all flashing classes are removed eventually
              await sleep(300);
              cells.forEach(cell => cell?.classList.remove('flashing'));
         }
@@ -505,40 +509,34 @@
 
         async function runAnimation() {
             processButton.disabled = true;
-            inputText.disabled = true; // Make input non-editable during animation
+            inputText.disabled = true;
 
-            // --- Reset previous state ---
             tokenizerContent.innerHTML = '';
             embeddingContent.innerHTML = '';
-            outputPredictionContent.innerHTML = ''; // Update reset
-            attentionMatrixDiv.innerHTML = ''; // Clear matrix
+            outputPredictionContent.innerHTML = '';
+            attentionMatrixDiv.innerHTML = '';
             arrows.forEach(arrow => arrow.style.opacity = 0);
             Object.values(statuses).forEach(s => s.textContent = '');
-            [tokenizerBox, embeddingBox, transformerBox, outputPredictionBox, attentionPart, ffnPart].forEach(el => { // Update reset
+            [tokenizerBox, embeddingBox, transformerBox, outputPredictionBox, attentionPart, ffnPart].forEach(el => {
                 el.classList.remove('highlight', 'processing');
             });
-            // Remove processing-border specifically if used
              attentionPart.classList.remove('processing-border');
              ffnPart.classList.remove('processing-border');
-
 
             const text = inputText.value.trim();
             if (!text) {
                  processButton.disabled = false;
                  inputText.disabled = false;
-                 return; // Don't run if empty
+                 return;
             }
 
-            // --- 1. Flow to Tokenizer ---
+            // --- 1. Tokenizer ---
             arrows[0].style.opacity = 1;
             statuses.tokenizer.textContent = 'Receiving text...';
             await sleep(800);
-
             tokenizerBox.classList.add('highlight', 'processing');
             statuses.tokenizer.textContent = 'Tokenizing...';
             await sleep(500);
-
-            // SIMULATED TOKENIZATION (split by space)
             const tokens = text.split(/\s+/).filter(Boolean);
             tokens.forEach((token, i) => {
                 const span = document.createElement('span');
@@ -551,15 +549,13 @@
             statuses.tokenizer.textContent = `Generated ${tokens.length} tokens`;
             await sleep(500 + tokens.length * 50);
 
-            // --- 2. Flow to Embedding ---
+            // --- 2. Embedding ---
              arrows[1].style.opacity = 1;
              statuses.embedding.textContent = 'Receiving tokens...';
              await sleep(800);
-
              embeddingBox.classList.add('highlight', 'processing');
              statuses.embedding.textContent = 'Creating embeddings...';
              await sleep(500);
-
              const embeddingVisuals = [];
              tokens.forEach((token, i) => {
                  const div = document.createElement('div');
@@ -573,53 +569,48 @@
              statuses.embedding.textContent = `Created ${tokens.length} embedding vectors`;
              await sleep(500 + tokens.length * 50);
 
-            // --- 3. Flow to Transformer ---
+            // --- 3. Transformer ---
              arrows[2].style.opacity = 1;
              statuses.transformer.textContent = 'Receiving embeddings...';
              await sleep(800);
-
-             transformerBox.classList.add('highlight'); // Highlight whole block
+             transformerBox.classList.add('highlight');
              statuses.transformer.textContent = `Processing sequence (length n=${tokens.length})...`;
              await sleep(300);
 
-             // 3a. Attention Animation
-             statuses.transformer.textContent = `Calculating Attention (O(n*n) = ${tokens.length*tokens.length} interactions)...`;
-             attentionPart.classList.add('processing-border'); // Use border pulse
-             createAttentionMatrix(tokens); // Generate the matrix
-             await sleep(500); // Pause to see the matrix structure
-             await animateAttentionMatrix(tokens.length); // Animate the cells flashing
+             // 3a. Attention
+             statuses.transformer.textContent = `Calculating Attention (~63% Compute, ~55% Time)...`; // Updated status
+             attentionPart.classList.add('processing-border');
+             createAttentionMatrix(tokens);
+             await sleep(500);
+             await animateAttentionMatrix(tokens.length);
              attentionPart.classList.remove('processing-border');
              statuses.transformer.textContent = `Attention calculation complete.`;
              await sleep(500);
 
-             // 3b. Feed-Forward Animation
-             statuses.transformer.textContent = `Processing through Feed-Forward Networks (Billions of Parameters)...`;
-             ffnPart.classList.add('processing-border'); // Use border pulse
-             await sleep(1200); // Keep FFN pause noticeable
+             // 3b. Feed-Forward
+             statuses.transformer.textContent = `Processing Feed-Forward (~36% Compute, ~44% Time)...`; // Updated status
+             ffnPart.classList.add('processing-border');
+             await sleep(1200);
              ffnPart.classList.remove('processing-border');
 
              transformerBox.classList.remove('highlight');
              statuses.transformer.textContent = `Generated output embedding.`;
              await sleep(500);
 
-            // --- 4. Flow to Output Prediction --- // Updated section name
+            // --- 4. Output Prediction ---
             arrows[3].style.opacity = 1;
             statuses.output.textContent = 'Receiving final embedding...';
             await sleep(800);
-
-            outputPredictionBox.classList.add('highlight', 'processing'); // Update box reference
-            statuses.output.textContent = 'Predicting next word...'; // Update status text
+            outputPredictionBox.classList.add('highlight', 'processing');
+            statuses.output.textContent = 'Predicting next word...';
             await sleep(500);
-
-            // SIMULATED OUTPUT WORD
             const outputWord = "Paris";
             const wordSpan = document.createElement('span');
             wordSpan.className = 'output-word-visual';
             wordSpan.textContent = outputWord;
-            outputPredictionContent.appendChild(wordSpan); // Update content reference
+            outputPredictionContent.appendChild(wordSpan);
             wordSpan.style.opacity = 1;
-
-            outputPredictionBox.classList.remove('highlight', 'processing'); // Update box reference
+            outputPredictionBox.classList.remove('highlight', 'processing');
             statuses.output.textContent = 'Predicted next word!';
             await sleep(1000);
 
@@ -628,48 +619,34 @@
             statuses.embedding.textContent = '';
             statuses.transformer.textContent = '';
             statuses.output.textContent = '';
-            arrows.forEach((arrow, i) => arrow.style.opacity = i >= 4 ? 1 : 0); // Show feedback arrows, hide others
-
-            // Animate the word span moving towards the input box
+            arrows.forEach((arrow, i) => arrow.style.opacity = i >= 4 ? 1 : 0);
             const flowWord = wordSpan.cloneNode(true);
-             // ... (rest of feedback animation code is the same) ...
              flowWord.style.opacity = '1';
              flowWord.classList.add('flow-item');
              document.body.appendChild(flowWord);
-
-             const startRect = wordSpan.getBoundingClientRect(); // Output box location
-             const endRect = inputText.getBoundingClientRect(); // Input field location
-
+             const startRect = wordSpan.getBoundingClientRect();
+             const endRect = inputText.getBoundingClientRect();
              flowWord.style.position = 'fixed';
              flowWord.style.transition = 'top 1s ease-in-out, left 1s ease-in-out, opacity 1s ease-in-out';
              flowWord.style.top = `${startRect.top + startRect.height / 2 - flowWord.offsetHeight / 2}px`;
              flowWord.style.left = `${startRect.left + startRect.width / 2 - flowWord.offsetWidth / 2}px`;
-
-             void flowWord.offsetWidth; // Trigger reflow
-
+             void flowWord.offsetWidth;
              setTimeout(() => {
                  flowWord.style.top = `${endRect.top + endRect.height / 2 - flowWord.offsetHeight / 2}px`;
-                 flowWord.style.left = `${endRect.left + endRect.width / 2 - flowWord.offsetWidth / 2}px`; // Target middle of input
+                 flowWord.style.left = `${endRect.left + endRect.width / 2 - flowWord.offsetWidth / 2}px`;
                  flowWord.style.opacity = '0';
              }, 50);
-
             await sleep(1100);
             flowWord.remove();
             arrows[4].style.opacity = 0;
             arrows[5].style.opacity = 0;
 
+            inputText.value = inputText.value.trimEnd() + " " + outputWord + " ";
 
-            // Append the word to the input
-            inputText.value = inputText.value.trimEnd() + " " + outputWord + " "; // Ensure single space before and add trailing space
-
-
-            // Re-enable input
             processButton.disabled = false;
             inputText.disabled = false;
             inputText.focus();
              inputText.scrollLeft = inputText.scrollWidth;
-
-
         }
 
         processButton.addEventListener('click', runAnimation);
