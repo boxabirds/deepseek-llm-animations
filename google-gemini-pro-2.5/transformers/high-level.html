@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transformer Flow Visualization</title>
     <style>
+        /* --- CSS (No changes needed from the previous version) --- */
         body {
             font-family: sans-serif;
             display: flex;
@@ -14,317 +15,54 @@
             background-color: #f4f4f4;
             color: #333;
         }
-
-        .container {
-            width: 85%;
-            max-width: 900px;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 5px; /* Reduced margin */
-        }
-
-        .model-subtitle { /* Style for the new subtitle */
-            text-align: center;
-            font-size: 0.9em;
-            color: #555;
-            margin-bottom: 20px;
-            font-style: italic;
-        }
-
-        .input-area {
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        #inputText {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1em;
-        }
-
-        #processButton {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        #processButton:hover {
-            background-color: #0056b3;
-        }
-         #processButton:disabled {
-            background-color: #aaa;
-            cursor: not-allowed;
-        }
-
-
-        .flow-arrow {
-            text-align: center;
-            font-size: 2em;
-            color: #aaa;
-            margin: 5px 0;
-            opacity: 0; /* Hidden initially */
-            transition: opacity 0.5s ease-in-out;
-        }
-
-        .box {
-            border: 2px solid #ccc;
-            background-color: #fff;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            min-height: 80px;
-            position: relative;
-            overflow: hidden; /* Clip animations */
-            transition: border-color 0.3s, background-color 0.3s;
-        }
-
-        .box h3 {
-            margin-top: 0;
-            text-align: center;
-            color: #555;
-            margin-bottom: 5px; /* Reduced margin */
-        }
-
-        /* New style for stats labels */
-        .stats-label {
-            font-size: 0.75em;
-            color: #666;
-            display: block;
-            text-align: center;
-            margin-top: 3px;
-            margin-bottom: 8px;
-            line-height: 1.2; /* Prevent overlap */
-        }
-
-        .box-content {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            justify-content: center;
-            align-items: center;
-            min-height: 40px; /* Ensure space for items */
-            position: relative;
-        }
-
-        .token-visual, .embedding-visual, .output-word-visual {
-            background-color: #e0e0e0;
-            padding: 5px 8px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            text-align: center;
-            border: 1px solid #ccc;
-            opacity: 0; /* Start hidden */
-            transition: opacity 0.5s, transform 0.5s;
-            white-space: nowrap; /* Prevent wrapping */
-        }
-
-        .embedding-visual {
-            background-color: #cce5ff; /* Light blue */
-            min-width: 20px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            writing-mode: vertical-lr; /* Simulate vector look */
-            text-orientation: mixed;
-            font-size: 0.7em;
-             padding: 2px;
-        }
-
-        .output-word-visual {
-            background-color: #d4edda; /* Light green */
-            font-weight: bold;
-        }
-
-        /* Transformer Internal Structure */
-        .transformer-internal {
-            display: flex;
-            gap: 10px;
-            justify-content: space-around;
-            margin-top: 10px;
-            min-height: 150px; /* Ensure minimum height for matrix */
-        }
-
-        .transformer-part {
-            border: 1px dashed #aaa;
-            padding: 10px;
-            border-radius: 4px;
-            text-align: center;
-            flex: 1;
-            position: relative;
-            transition: background-color 0.2s, transform 0.2s;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .transformer-part h4 {
-            margin: 0 0 5px 0;
-            font-size: 0.9em;
-            color: #666;
-        }
-
-        #attention {
-            flex-basis: 50%;
-            overflow: auto;
-        }
-
-        #ffn {
-            flex-basis: 50%;
-            background-color: #f8f9fa;
-        }
-
-        #ffn::before {
-             content: '';
-             position: absolute;
-             inset: 5px;
-             background: repeating-linear-gradient(
-                45deg,
-                #e9ecef,
-                #e9ecef 3px,
-                #f8f9fa 3px,
-                #f8f9fa 6px
-             );
-             opacity: 0.5;
-             z-index: 0;
-             border-radius: 4px;
-        }
-         /* Ensure text is above the pattern */
-         #ffn h4, #ffn .complexity-label, #ffn .stats-label {
-            position: relative;
-            z-index: 1;
-         }
-
-
-        .complexity-label {
-            font-size: 0.8em;
-            color: #dc3545; /* Reddish color for emphasis */
-            font-weight: bold;
-            display: block;
-            margin-top: 5px;
-        }
-
-        #ffn .complexity-label {
-             color: #007bff; /* Blue color for FFN */
-             margin-bottom: 3px; /* Space before stats */
-        }
-        #attention .complexity-label {
-            margin-bottom: 3px; /* Space before stats */
-        }
-
-
-        /* Attention Matrix Styles */
-        .attention-matrix-container {
-            flex-grow: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 5px; /* Reduced top margin */
-            padding: 5px;
-            overflow: hidden;
-        }
-        .attention-matrix {
-            display: grid;
-            gap: 1px;
-            background-color: #ccc;
-            border: 1px solid #ccc;
-            font-size: 0.6em;
-            max-width: 100%;
-            max-height: 100%;
-            overflow: hidden;
-        }
-        .matrix-cell, .matrix-header, .matrix-corner {
-            background-color: #fff;
-            padding: 1px;
-            text-align: center;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            min-width: 15px;
-            min-height: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            line-height: 1;
-        }
-         .matrix-header {
-             background-color: #f0f0f0;
-             font-weight: bold;
-             writing-mode: vertical-lr;
-             text-orientation: mixed;
-         }
-         .matrix-header.col {
-             writing-mode: horizontal-tb;
-             text-orientation: mixed;
-         }
-         .matrix-cell {
-            background-color: #e9f5ff;
-            transition: background-color 0.1s ease-out;
-         }
-         .matrix-cell.flashing {
-             background-color: #ffc107;
-             animation: flash-cell 0.3s ease-out forwards;
-         }
-         @keyframes flash-cell {
-            0% { background-color: #ffc107; }
-            100% { background-color: #90caf9; }
-         }
-
-
-        /* --- Animations --- */
-        .highlight {
-            border-color: #007bff;
-            background-color: #e7f3ff;
-        }
-        .processing {
-             animation: pulse-box 1s infinite alternate;
-        }
-         @keyframes pulse-box {
-            from { background-color: #e7f3ff; }
-            to { background-color: #d0e7ff; }
-        }
-        .transformer-part.processing-border {
-             animation: pulse-border 0.5s infinite alternate;
-             transform: scale(1.02);
-        }
-         @keyframes pulse-border {
-            from { box-shadow: 0 0 0px 0px rgba(0, 123, 255, 0.5); }
-            to { box-shadow: 0 0 5px 3px rgba(0, 123, 255, 0.5); }
-        }
-        .flow-item {
-            position: absolute;
-            z-index: 10;
-            transition: top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out;
-        }
-        .status-subtitle {
-            text-align: center;
-            margin-top: 5px;
-            font-style: italic;
-            color: #666;
-            height: 1.2em;
-            position: relative;
-            width: 100%;
-        }
-        #transformerBox .status-subtitle {
-             margin-top: 15px;
-        }
-
+        .container { width: 85%; max-width: 900px; }
+        h1 { text-align: center; margin-bottom: 5px; }
+        .model-subtitle { text-align: center; font-size: 0.9em; color: #555; margin-bottom: 20px; font-style: italic; }
+        .input-area { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        #inputText { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+        #processButton { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; }
+        #processButton:hover { background-color: #0056b3; }
+        #processButton:disabled { background-color: #aaa; cursor: not-allowed; }
+        .flow-arrow { text-align: center; font-size: 2em; color: #aaa; margin: 5px 0; opacity: 0; transition: opacity 0.5s ease-in-out; }
+        .box { border: 2px solid #ccc; background-color: #fff; padding: 15px; margin-bottom: 10px; border-radius: 8px; min-height: 80px; position: relative; overflow: hidden; transition: border-color 0.3s, background-color 0.3s; }
+        .box h3 { margin-top: 0; text-align: center; color: #555; margin-bottom: 5px; }
+        .stats-label { font-size: 0.75em; color: #666; display: block; text-align: center; margin-top: 3px; margin-bottom: 8px; line-height: 1.2; }
+        .box-content { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center; min-height: 40px; position: relative; }
+        .token-visual, .embedding-visual, .output-word-visual { background-color: #e0e0e0; padding: 5px 8px; border-radius: 4px; font-size: 0.9em; text-align: center; border: 1px solid #ccc; opacity: 0; transition: opacity 0.5s, transform 0.5s; white-space: nowrap; }
+        .embedding-visual { background-color: #cce5ff; min-width: 20px; height: 30px; display: flex; align-items: center; justify-content: center; writing-mode: vertical-lr; text-orientation: mixed; font-size: 0.7em; padding: 2px; }
+        .output-word-visual { background-color: #d4edda; font-weight: bold; }
+        .transformer-internal { display: flex; gap: 10px; justify-content: space-around; margin-top: 10px; min-height: 150px; }
+        .transformer-part { border: 1px dashed #aaa; padding: 10px; border-radius: 4px; text-align: center; flex: 1; position: relative; transition: background-color 0.2s, transform 0.2s; display: flex; flex-direction: column; }
+        .transformer-part h4 { margin: 0 0 5px 0; font-size: 0.9em; color: #666; }
+        #attention { flex-basis: 50%; overflow: auto; }
+        #ffn { flex-basis: 50%; background-color: #f8f9fa; }
+        #ffn::before { content: ''; position: absolute; inset: 5px; background: repeating-linear-gradient( 45deg, #e9ecef, #e9ecef 3px, #f8f9fa 3px, #f8f9fa 6px ); opacity: 0.5; z-index: 0; border-radius: 4px; }
+        #ffn h4, #ffn .complexity-label, #ffn .stats-label { position: relative; z-index: 1; }
+        .complexity-label { font-size: 0.8em; color: #dc3545; font-weight: bold; display: block; margin-top: 5px; }
+        #ffn .complexity-label { color: #007bff; margin-bottom: 3px; }
+        #attention .complexity-label { margin-bottom: 3px; }
+        .attention-matrix-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; margin-top: 5px; padding: 5px; overflow: hidden; }
+        .attention-matrix { display: grid; gap: 1px; background-color: #ccc; border: 1px solid #ccc; font-size: 0.6em; max-width: 100%; max-height: 100%; overflow: hidden; }
+        .matrix-cell, .matrix-header, .matrix-corner { background-color: #fff; padding: 1px; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 15px; min-height: 15px; display: flex; justify-content: center; align-items: center; line-height: 1; }
+        .matrix-header { background-color: #f0f0f0; font-weight: bold; writing-mode: vertical-lr; text-orientation: mixed; }
+        .matrix-header.col { writing-mode: horizontal-tb; text-orientation: mixed; }
+        .matrix-cell { background-color: #e9f5ff; transition: background-color 0.1s ease-out; }
+        .matrix-cell.flashing { background-color: #ffc107; animation: flash-cell 0.3s ease-out forwards; }
+        @keyframes flash-cell { 0% { background-color: #ffc107; } 100% { background-color: #90caf9; } }
+        .highlight { border-color: #007bff; background-color: #e7f3ff; }
+        .processing { animation: pulse-box 1s infinite alternate; }
+        @keyframes pulse-box { from { background-color: #e7f3ff; } to { background-color: #d0e7ff; } }
+        .transformer-part.processing-border { animation: pulse-border 0.5s infinite alternate; transform: scale(1.02); }
+        @keyframes pulse-border { from { box-shadow: 0 0 0px 0px rgba(0, 123, 255, 0.5); } to { box-shadow: 0 0 5px 3px rgba(0, 123, 255, 0.5); } }
+        .flow-item { position: absolute; z-index: 10; transition: top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out; }
+        .status-subtitle { text-align: center; margin-top: 5px; font-style: italic; color: #666; height: 1.2em; position: relative; width: 100%; }
+        #transformerBox .status-subtitle { margin-top: 15px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>Transformer Flow</h1>
-        <!-- Added Subtitle -->
         <p class="model-subtitle">Example for ~1 Billion Parameter Model</p>
 
         <div class="input-area">
@@ -336,7 +74,6 @@
 
         <div class="box" id="tokenizerBox">
             <h3>Tokenizer</h3>
-            <!-- No specific stats for basic tokenizer in this context -->
             <div class="box-content" id="tokenizerContent"></div>
             <div class="status-subtitle" id="tokenizerStatus"></div>
         </div>
@@ -345,7 +82,7 @@
 
         <div class="box" id="embeddingBox">
             <h3>Embeddings</h3>
-            <!-- Added Stats Label -->
+            <!-- UPDATED Stats Label -->
             <div class="stats-label">(78M Params | ~1% Compute | ~1% Time)</div>
             <div class="box-content" id="embeddingContent"></div>
             <div class="status-subtitle" id="embeddingStatus"></div>
@@ -359,7 +96,7 @@
                 <div class="transformer-part" id="attention">
                     <h4>Attention</h4>
                     <span class="complexity-label">(O(n²))</span>
-                    <!-- Added Stats Label -->
+                    <!-- UPDATED Stats Label -->
                     <div class="stats-label">(302M Params | ~63% Compute | ~55% Time)</div>
                     <div class="attention-matrix-container">
                          <div id="attentionMatrix" class="attention-matrix"></div>
@@ -368,9 +105,8 @@
                 <div class="transformer-part" id="ffn">
                     <h4>Feed-Forward</h4>
                     <span class="complexity-label">(Billions of Parameters)</span>
-                     <!-- Added Stats Label -->
+                     <!-- UPDATED Stats Label -->
                     <div class="stats-label">(604M Params | ~36% Compute | ~44% Time)</div>
-                    <!-- Placeholder for FFN internal visual density (handled by ::before) -->
                 </div>
             </div>
             <div class="status-subtitle" id="transformerStatus"></div>
@@ -380,8 +116,8 @@
 
         <div class="box" id="outputPredictionBox">
             <h3>Output Prediction</h3>
-            <!-- Often includes a final linear layer + softmax, params usually part of "FFN" or smaller -->
-             <div class="stats-label">(Small params | Negligible compute/time)</div>
+            <!-- UPDATED Stats Label -->
+             <div class="stats-label">(77M Params | ~0.03% Compute | ~8% Time)</div>
             <div class="box-content" id="outputPredictionContent"></div>
              <div class="status-subtitle" id="outputPredictionStatus"></div>
         </div>
@@ -397,12 +133,12 @@
 
 
     <script>
-        // === JAVASCRIPT (No changes needed from the previous version) ===
-        // All the logic for animation, matrix generation, etc., remains the same.
-        // The new labels are static HTML/CSS elements.
+        // --- JAVASCRIPT ---
+        // Only the status text strings within runAnimation() are updated
 
         const inputText = document.getElementById('inputText');
         const processButton = document.getElementById('processButton');
+        // ... (rest of element selections are the same)
         const tokenizerBox = document.getElementById('tokenizerBox');
         const tokenizerContent = document.getElementById('tokenizerContent');
         const embeddingBox = document.getElementById('embeddingBox');
@@ -416,101 +152,29 @@
         const outputPredictionStatus = document.getElementById('outputPredictionStatus');
 
         const arrows = [
-            document.getElementById('arrow1'),
-            document.getElementById('arrow2'),
-            document.getElementById('arrow3'),
-            document.getElementById('arrow4'),
-            document.getElementById('arrowFeedback'),
-            document.getElementById('arrowFeedback2'),
+            document.getElementById('arrow1'), document.getElementById('arrow2'),
+            document.getElementById('arrow3'), document.getElementById('arrow4'),
+            document.getElementById('arrowFeedback'), document.getElementById('arrowFeedback2'),
         ];
-
         const statuses = {
             tokenizer: document.getElementById('tokenizerStatus'),
             embedding: document.getElementById('embeddingStatus'),
             transformer: document.getElementById('transformerStatus'),
             output: outputPredictionStatus
-        }
-
+        };
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-        function createFlowItem(elementToClone, startElement, endElement) {
-             const item = elementToClone.cloneNode(true);
-             item.style.opacity = '1';
-             item.classList.add('flow-item');
-             document.body.appendChild(item);
-             const startRect = startElement.getBoundingClientRect();
-             const endRect = endElement.getBoundingClientRect();
-             item.style.position = 'fixed';
-             item.style.top = `${startRect.top + startRect.height / 2 - item.offsetHeight / 2}px`;
-             item.style.left = `${startRect.left + startRect.width / 2 - item.offsetWidth / 2}px`;
-             item.style.transition = 'top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out';
-              void item.offsetWidth;
-              setTimeout(() => {
-                  item.style.top = `${endRect.top + endRect.height / 2 - item.offsetHeight / 2}px`;
-                  item.style.left = `${endRect.left + endRect.width / 2 - item.offsetWidth / 2}px`;
-                  item.style.opacity = '0';
-              }, 50);
-             setTimeout(() => {
-                 item.remove();
-             }, 900);
-        }
-
-        function createAttentionMatrix(tokens) {
-            attentionMatrixDiv.innerHTML = '';
-            const n = tokens.length;
-            if (n === 0) return;
-            attentionMatrixDiv.style.gridTemplateColumns = `auto repeat(${n}, minmax(15px, 1fr))`;
-            attentionMatrixDiv.style.gridTemplateRows = `auto repeat(${n}, minmax(15px, 1fr))`;
-             const corner = document.createElement('div');
-             corner.className = 'matrix-corner';
-             attentionMatrixDiv.appendChild(corner);
-             for (let j = 0; j < n; j++) {
-                 const header = document.createElement('div');
-                 header.className = 'matrix-header col';
-                 header.textContent = tokens[j];
-                 header.title = tokens[j];
-                 attentionMatrixDiv.appendChild(header);
-             }
-             for (let i = 0; i < n; i++) {
-                 const header = document.createElement('div');
-                 header.className = 'matrix-header row';
-                 header.textContent = tokens[i];
-                 header.title = tokens[i];
-                 attentionMatrixDiv.appendChild(header);
-                 for (let j = 0; j < n; j++) {
-                     const cell = document.createElement('div');
-                     cell.className = 'matrix-cell';
-                     cell.id = `cell-${i}-${j}`;
-                     attentionMatrixDiv.appendChild(cell);
-                 }
-             }
-        }
-
-        async function animateAttentionMatrix(n) {
-            const cells = [];
-            for (let i = 0; i < n; i++) {
-                for (let j = 0; j < n; j++) {
-                    const cell = document.getElementById(`cell-${i}-${j}`);
-                    if (cell) cells.push(cell);
-                }
-            }
-            const delay = Math.max(10, Math.min(50, 1500 / (n * n)));
-            for (let i = 0; i < cells.length; i++) {
-                 cells[i].classList.add('flashing');
-                 setTimeout(() => {
-                     if (cells[i]) cells[i].classList.remove('flashing');
-                 }, 300);
-                await sleep(delay);
-            }
-             await sleep(300);
-             cells.forEach(cell => cell?.classList.remove('flashing'));
-        }
+        // ... (createFlowItem, createAttentionMatrix, animateAttentionMatrix functions remain the same) ...
+        function createFlowItem(elementToClone, startElement, endElement) { const item = elementToClone.cloneNode(true); item.style.opacity = '1'; item.classList.add('flow-item'); document.body.appendChild(item); const startRect = startElement.getBoundingClientRect(); const endRect = endElement.getBoundingClientRect(); item.style.position = 'fixed'; item.style.top = `${startRect.top + startRect.height / 2 - item.offsetHeight / 2}px`; item.style.left = `${startRect.left + startRect.width / 2 - item.offsetWidth / 2}px`; item.style.transition = 'top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out'; void item.offsetWidth; setTimeout(() => { item.style.top = `${endRect.top + endRect.height / 2 - item.offsetHeight / 2}px`; item.style.left = `${endRect.left + endRect.width / 2 - item.offsetWidth / 2}px`; item.style.opacity = '0'; }, 50); setTimeout(() => { item.remove(); }, 900); }
+        function createAttentionMatrix(tokens) { attentionMatrixDiv.innerHTML = ''; const n = tokens.length; if (n === 0) return; attentionMatrixDiv.style.gridTemplateColumns = `auto repeat(${n}, minmax(15px, 1fr))`; attentionMatrixDiv.style.gridTemplateRows = `auto repeat(${n}, minmax(15px, 1fr))`; const corner = document.createElement('div'); corner.className = 'matrix-corner'; attentionMatrixDiv.appendChild(corner); for (let j = 0; j < n; j++) { const header = document.createElement('div'); header.className = 'matrix-header col'; header.textContent = tokens[j]; header.title = tokens[j]; attentionMatrixDiv.appendChild(header); } for (let i = 0; i < n; i++) { const header = document.createElement('div'); header.className = 'matrix-header row'; header.textContent = tokens[i]; header.title = tokens[i]; attentionMatrixDiv.appendChild(header); for (let j = 0; j < n; j++) { const cell = document.createElement('div'); cell.className = 'matrix-cell'; cell.id = `cell-${i}-${j}`; attentionMatrixDiv.appendChild(cell); } } }
+        async function animateAttentionMatrix(n) { const cells = []; for (let i = 0; i < n; i++) { for (let j = 0; j < n; j++) { const cell = document.getElementById(`cell-${i}-${j}`); if (cell) cells.push(cell); } } const delay = Math.max(10, Math.min(50, 1500 / (n * n))); for (let i = 0; i < cells.length; i++) { cells[i].classList.add('flashing'); setTimeout(() => { if (cells[i]) cells[i].classList.remove('flashing'); }, 300); await sleep(delay); } await sleep(300); cells.forEach(cell => cell?.classList.remove('flashing')); }
 
 
         async function runAnimation() {
             processButton.disabled = true;
             inputText.disabled = true;
 
+            // --- Reset ---
             tokenizerContent.innerHTML = '';
             embeddingContent.innerHTML = '';
             outputPredictionContent.innerHTML = '';
@@ -524,129 +188,59 @@
              ffnPart.classList.remove('processing-border');
 
             const text = inputText.value.trim();
-            if (!text) {
-                 processButton.disabled = false;
-                 inputText.disabled = false;
-                 return;
-            }
+            if (!text) { /* ... handle empty input ... */ processButton.disabled = false; inputText.disabled = false; return; }
 
             // --- 1. Tokenizer ---
-            arrows[0].style.opacity = 1;
-            statuses.tokenizer.textContent = 'Receiving text...';
-            await sleep(800);
-            tokenizerBox.classList.add('highlight', 'processing');
-            statuses.tokenizer.textContent = 'Tokenizing...';
-            await sleep(500);
+            // ... (No changes here) ...
+            arrows[0].style.opacity = 1; statuses.tokenizer.textContent = 'Receiving text...'; await sleep(800);
+            tokenizerBox.classList.add('highlight', 'processing'); statuses.tokenizer.textContent = 'Tokenizing...'; await sleep(500);
             const tokens = text.split(/\s+/).filter(Boolean);
-            tokens.forEach((token, i) => {
-                const span = document.createElement('span');
-                span.className = 'token-visual';
-                span.textContent = token;
-                tokenizerContent.appendChild(span);
-                setTimeout(() => span.style.opacity = 1, i * 50);
-            });
-            tokenizerBox.classList.remove('highlight', 'processing');
-            statuses.tokenizer.textContent = `Generated ${tokens.length} tokens`;
-            await sleep(500 + tokens.length * 50);
+            tokens.forEach((token, i) => { const span = document.createElement('span'); span.className = 'token-visual'; span.textContent = token; tokenizerContent.appendChild(span); setTimeout(() => span.style.opacity = 1, i * 50); });
+            tokenizerBox.classList.remove('highlight', 'processing'); statuses.tokenizer.textContent = `Generated ${tokens.length} tokens`; await sleep(500 + tokens.length * 50);
 
             // --- 2. Embedding ---
-             arrows[1].style.opacity = 1;
-             statuses.embedding.textContent = 'Receiving tokens...';
-             await sleep(800);
-             embeddingBox.classList.add('highlight', 'processing');
-             statuses.embedding.textContent = 'Creating embeddings...';
-             await sleep(500);
-             const embeddingVisuals = [];
-             tokens.forEach((token, i) => {
-                 const div = document.createElement('div');
-                 div.className = 'embedding-visual';
-                 div.title = token;
-                 embeddingContent.appendChild(div);
-                 embeddingVisuals.push(div);
-                 setTimeout(() => div.style.opacity = 1, i * 50);
-             });
-             embeddingBox.classList.remove('highlight', 'processing');
-             statuses.embedding.textContent = `Created ${tokens.length} embedding vectors`;
-             await sleep(500 + tokens.length * 50);
+            // ... (No changes here) ...
+            arrows[1].style.opacity = 1; statuses.embedding.textContent = 'Receiving tokens...'; await sleep(800);
+            embeddingBox.classList.add('highlight', 'processing'); statuses.embedding.textContent = 'Creating embeddings (~1% Compute/Time)...'; await sleep(500); // Minor status text update
+            const embeddingVisuals = []; tokens.forEach((token, i) => { const div = document.createElement('div'); div.className = 'embedding-visual'; div.title = token; embeddingContent.appendChild(div); embeddingVisuals.push(div); setTimeout(() => div.style.opacity = 1, i * 50); });
+            embeddingBox.classList.remove('highlight', 'processing'); statuses.embedding.textContent = `Created ${tokens.length} embedding vectors`; await sleep(500 + tokens.length * 50);
+
 
             // --- 3. Transformer ---
-             arrows[2].style.opacity = 1;
-             statuses.transformer.textContent = 'Receiving embeddings...';
-             await sleep(800);
-             transformerBox.classList.add('highlight');
-             statuses.transformer.textContent = `Processing sequence (length n=${tokens.length})...`;
-             await sleep(300);
+            arrows[2].style.opacity = 1; statuses.transformer.textContent = 'Receiving embeddings...'; await sleep(800);
+            transformerBox.classList.add('highlight'); statuses.transformer.textContent = `Processing sequence (length n=${tokens.length})...`; await sleep(300);
 
-             // 3a. Attention
-             statuses.transformer.textContent = `Calculating Attention (~63% Compute, ~55% Time)...`; // Updated status
-             attentionPart.classList.add('processing-border');
-             createAttentionMatrix(tokens);
-             await sleep(500);
-             await animateAttentionMatrix(tokens.length);
-             attentionPart.classList.remove('processing-border');
-             statuses.transformer.textContent = `Attention calculation complete.`;
-             await sleep(500);
+            // 3a. Attention - UPDATED Status Text
+            statuses.transformer.textContent = `Calculating Attention (~63% Compute, ~55% Time)...`;
+            attentionPart.classList.add('processing-border'); createAttentionMatrix(tokens); await sleep(500);
+            await animateAttentionMatrix(tokens.length); attentionPart.classList.remove('processing-border');
+            statuses.transformer.textContent = `Attention calculation complete.`; await sleep(500);
 
-             // 3b. Feed-Forward
-             statuses.transformer.textContent = `Processing Feed-Forward (~36% Compute, ~44% Time)...`; // Updated status
-             ffnPart.classList.add('processing-border');
-             await sleep(1200);
-             ffnPart.classList.remove('processing-border');
+            // 3b. Feed-Forward - UPDATED Status Text
+            statuses.transformer.textContent = `Processing Feed-Forward (~36% Compute, ~44% Time)...`;
+            ffnPart.classList.add('processing-border'); await sleep(1200);
+            ffnPart.classList.remove('processing-border');
 
-             transformerBox.classList.remove('highlight');
-             statuses.transformer.textContent = `Generated output embedding.`;
-             await sleep(500);
+            transformerBox.classList.remove('highlight'); statuses.transformer.textContent = `Generated output embedding.`; await sleep(500);
 
             // --- 4. Output Prediction ---
-            arrows[3].style.opacity = 1;
-            statuses.output.textContent = 'Receiving final embedding...';
-            await sleep(800);
+            arrows[3].style.opacity = 1; statuses.output.textContent = 'Receiving final embedding...'; await sleep(800);
             outputPredictionBox.classList.add('highlight', 'processing');
-            statuses.output.textContent = 'Predicting next word...';
+            // UPDATED Status Text
+            statuses.output.textContent = 'Predicting next word (~0.03% Compute, ~8% Time)...';
             await sleep(500);
-            const outputWord = "Paris";
-            const wordSpan = document.createElement('span');
-            wordSpan.className = 'output-word-visual';
-            wordSpan.textContent = outputWord;
-            outputPredictionContent.appendChild(wordSpan);
-            wordSpan.style.opacity = 1;
-            outputPredictionBox.classList.remove('highlight', 'processing');
-            statuses.output.textContent = 'Predicted next word!';
-            await sleep(1000);
+            const outputWord = "Paris"; // Hardcoded
+            const wordSpan = document.createElement('span'); wordSpan.className = 'output-word-visual'; wordSpan.textContent = outputWord; outputPredictionContent.appendChild(wordSpan); wordSpan.style.opacity = 1;
+            outputPredictionBox.classList.remove('highlight', 'processing'); statuses.output.textContent = 'Predicted next word!'; await sleep(1000);
 
             // --- 5. Feedback Loop ---
-            statuses.tokenizer.textContent = '';
-            statuses.embedding.textContent = '';
-            statuses.transformer.textContent = '';
-            statuses.output.textContent = '';
+            // ... (No changes here) ...
+            statuses.tokenizer.textContent = ''; statuses.embedding.textContent = ''; statuses.transformer.textContent = ''; statuses.output.textContent = '';
             arrows.forEach((arrow, i) => arrow.style.opacity = i >= 4 ? 1 : 0);
-            const flowWord = wordSpan.cloneNode(true);
-             flowWord.style.opacity = '1';
-             flowWord.classList.add('flow-item');
-             document.body.appendChild(flowWord);
-             const startRect = wordSpan.getBoundingClientRect();
-             const endRect = inputText.getBoundingClientRect();
-             flowWord.style.position = 'fixed';
-             flowWord.style.transition = 'top 1s ease-in-out, left 1s ease-in-out, opacity 1s ease-in-out';
-             flowWord.style.top = `${startRect.top + startRect.height / 2 - flowWord.offsetHeight / 2}px`;
-             flowWord.style.left = `${startRect.left + startRect.width / 2 - flowWord.offsetWidth / 2}px`;
-             void flowWord.offsetWidth;
-             setTimeout(() => {
-                 flowWord.style.top = `${endRect.top + endRect.height / 2 - flowWord.offsetHeight / 2}px`;
-                 flowWord.style.left = `${endRect.left + endRect.width / 2 - flowWord.offsetWidth / 2}px`;
-                 flowWord.style.opacity = '0';
-             }, 50);
-            await sleep(1100);
-            flowWord.remove();
-            arrows[4].style.opacity = 0;
-            arrows[5].style.opacity = 0;
-
+            const flowWord = wordSpan.cloneNode(true); flowWord.style.opacity = '1'; flowWord.classList.add('flow-item'); document.body.appendChild(flowWord); const startRect = wordSpan.getBoundingClientRect(); const endRect = inputText.getBoundingClientRect(); flowWord.style.position = 'fixed'; flowWord.style.transition = 'top 1s ease-in-out, left 1s ease-in-out, opacity 1s ease-in-out'; flowWord.style.top = `${startRect.top + startRect.height / 2 - flowWord.offsetHeight / 2}px`; flowWord.style.left = `${startRect.left + startRect.width / 2 - flowWord.offsetWidth / 2}px`; void flowWord.offsetWidth; setTimeout(() => { flowWord.style.top = `${endRect.top + endRect.height / 2 - flowWord.offsetHeight / 2}px`; flowWord.style.left = `${endRect.left + endRect.width / 2 - flowWord.offsetWidth / 2}px`; flowWord.style.opacity = '0'; }, 50); await sleep(1100); flowWord.remove();
+            arrows[4].style.opacity = 0; arrows[5].style.opacity = 0;
             inputText.value = inputText.value.trimEnd() + " " + outputWord + " ";
-
-            processButton.disabled = false;
-            inputText.disabled = false;
-            inputText.focus();
-             inputText.scrollLeft = inputText.scrollWidth;
+            processButton.disabled = false; inputText.disabled = false; inputText.focus(); inputText.scrollLeft = inputText.scrollWidth;
         }
 
         processButton.addEventListener('click', runAnimation);
