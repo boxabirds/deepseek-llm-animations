@@ -3,32 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Query Animation - Scene 1</title>
+    <title>LLM Query Animation</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="scene-container">
-        <!-- Initial Text Box -->
+        <!-- Scene 1 Elements -->
         <div class="text-box">
             <span id="query-text"></span><span class="cursor">|</span>
         </div>
-
-        <!-- JSON Representation (Initially Hidden) -->
         <div class="json-view">
             <pre><code>{
   "user_input": "Capital of France?"
 }</code></pre>
         </div>
-
-        <!-- Final User Message Box (Initially Hidden) -->
         <div class="user-message-box">
             User Message
         </div>
+
+        <!-- Scene 2 Elements -->
+        <div class="chat-history-box">
+            Chat History
+        </div>
+        <div class="chat-history-json">
+             <pre><code>{
+  "prev_message": "Hello!"
+}</code></pre>
+        </div>
+
     </div>
 
-    <!-- Include GSAP Core and TextPlugin -->
+    <!-- Include GSAP Core and TextPlugin (MUST be before the module script) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/TextPlugin.min.js"></script>
-    <script src="script.js"></script>
+
+    <!-- Load the main script as a module -->
+    <script src="script.js" type="module"></script>
 </body>
 </html>

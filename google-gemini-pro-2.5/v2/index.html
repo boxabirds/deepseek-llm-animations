@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGL Draggable Ice Cubes (Improved Drag)</title>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; }
+        canvas { display: block; width: 100vw; height: 100vh; cursor: grab; }
+        canvas:active { cursor: grabbing; }
+    </style>
+</head>
+<body>
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- Vertex Shader -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec2 a_position;
+        void main() {
+            gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+    </script>
+
+    <!-- Fragment Shader (Multiple Draggable Cube Uniforms) -->
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision highp float;
+
+        // Uniforms
+        uniform vec3 iResolution;
+        uniform vec4 iMouse; // xy=current, zw=click (if z>0)
+        uniform vec3 u_camPos;
+        uniform mat3 u_camMat;
+        uniform vec2 u_redCubeXZ;   // NEW: Position uniforms for all cubes
+        uniform vec2 u_greenCubeXZ;
+        uniform vec2 u_blueCubeXZ;
+
+        // Constants
+        const float CORNER_RADIUS = 0.2;
+        const float BASE_ALPHA = 0.5;
+
+        // SDFs & Utils (sdPlane, sdRoundBox, opU)
+        float dot2( in vec3 v ) { return dot(v,v); }
+        float sdPlane( vec3 p ) { return p.y; }
+        float sdRoundBox( vec3 p, vec3 b, float r ) { vec3 q=abs(p)-b; return length(max(q,0.0))+min(max(q.x,max(q.y,q.z)),0.0)-r; }
+        vec2 opU( vec2 d1, vec2 d2 ) { return (d1.x<d2.x) ? d1 : d2; }
+
+        // Scene Definition - Uses uniforms for ALL cube positions
+        vec2 map( in vec3 pos ) {
+            vec2 res = vec2( sdPlane(pos), 1.0 );
+            vec3 cubeSize = vec3(0.5);
+            float cubeY = cubeSize.y + CORNER_RADIUS;
+
+            vec3 redCubePos = vec3(u_redCubeXZ.x, cubeY, u_redCubeXZ.y);
+            res = opU( res, vec2( sdRoundBox(pos - redCubePos, cubeSize, CORNER_RADIUS), 2.0 ) );
+
+            vec3 greenCubePos = vec3(u_greenCubeXZ.x, cubeY, u_greenCubeXZ.y);
+            res = opU( res, vec2( sdRoundBox(pos - greenCubePos, cubeSize, CORNER_RADIUS), 3.0 ) );
+
+            vec3 blueCubePos = vec3(u_blueCubeXZ.x, cubeY, u_blueCubeXZ.y);
+            res = opU( res, vec2( sdRoundBox(pos - blueCubePos, cubeSize, CORNER_RADIUS), 4.0 ) );
+
+            return res;
+        }
+
+        // Raycasting (Unchanged)
+         vec2 raycast( in vec3 ro, in vec3 rd ) {
+             vec2 res = vec2(-1.0,-1.0); float tmin=0.1; float tmax=60.0;
+             float tp1=-ro.y/rd.y; if(tp1>0.0 && tp1<tmax){tmax=tp1; res=vec2(tp1,1.0);}
+             float t=tmin;
+             for(int i=0; i<100; i++){ if(t>=tmax)break; vec2 h=map(ro+rd*t);
+                 if(abs(h.x)<(0.002*t)){res=vec2(t,h.y);break;} t+=h.x*0.9; }
+             return res;
+         }
+
+        // Lighting, Shading, Fresnel, Render (Unchanged - uses result of map)
+        float calcSoftshadow(in vec3 ro,in vec3 rd,in float mint, in float tmax){/*...*/float res=1.0;float t=mint;float ph=1e10;for(int i=0;i<32;i++){float h=map(ro+rd*t).x;if(h<0.001)return 0.0;float y=h*h/(2.0*ph);float d=sqrt(max(0.0,h*h-y*y));res=min(res,16.*d/max(.001,t-y));ph=h;t+=clamp(h,.01,.5);if(res<.001||t>tmax)break;}return clamp(res*res*(3.-2.*res),0.,1.);}
+        vec3 calcNormal(in vec3 pos){/*...*/vec2 e=vec2(1.,-1.)*.5773*.002;return normalize(e.xyy*map(pos+e.xyy).x+e.yyx*map(pos+e.yyx).x+e.yxy*map(pos+e.yxy).x+e.xxx*map(pos+e.xxx).x);}
+        float calcAO(in vec3 pos,in vec3 nor){/*...*/float occ=0.;float sca=1.;for(int i=0;i<5;i++){float h=.01+.15*float(i)/4.;float d=map(pos+h*nor).x;occ+=max(0.,(h-d))*sca;sca*=.95;}return clamp(1.-3.*occ,0.,1.)*(.5+.5*nor.y);}
+        float checkersSimple(in vec2 p){/*...*/vec2 P=floor(p);return mod(P.x+P.y,2.0);}
+        float fresnelSchlick(float c,float F0){/*...*/return F0+(1.-F0)*pow(clamp(1.-c,0.,1.),5.);}
+        vec3 render(in vec3 ro,in vec3 rd){vec3 skyCol=vec3(.6,.7,.85)-max(rd.y,0.)*.3;vec3 finalCol=skyCol;vec2 res=raycast(ro,rd);float t=res.x;float m=res.y;if(m>-.5){vec3 pos=ro+t*rd;vec3 nor=calcNormal(pos);vec3 ref=reflect(rd,nor);vec3 viewDir=-rd;vec3 baseColor=vec3(.8);float ks=.5;float F0=.04;float currentAlpha=1.;if(m<1.5){float f=checkersSimple(4.*pos.xz);baseColor=.3+f*vec3(.1);ks=.2;F0=.02;currentAlpha=1.;}else{if(m<2.5)baseColor=vec3(1.,.2,.2);else if(m<3.5)baseColor=vec3(.2,1.,.2);else baseColor=vec3(.2,.2,1.);ks=1.;F0=.05;}float cosTheta=clamp(dot(viewDir,nor),0.,1.);float fresnel=fresnelSchlick(cosTheta,F0);if(m>=1.5){float fAlpha=pow(clamp(1.+dot(rd,nor),0.,1.),3.);currentAlpha=mix(BASE_ALPHA,1.,fAlpha);}float occ=calcAO(pos,nor);vec3 lin=vec3(0.);{vec3 lig=normalize(vec3(-.6,.5,-.8));vec3 hal=normalize(lig+viewDir);float NdotL=clamp(dot(nor,lig),0.,1.);float NdotH=clamp(dot(nor,hal),0.,1.);float shd=1.;if(NdotL>.001)shd=calcSoftshadow(pos,lig,.02,2.5);vec3 diffuse=baseColor*(1.-fresnel);lin+=diffuse*NdotL*vec3(1.4,1.1,.9)*shd;float specPower=pow(NdotH,128.);lin+=ks*fresnel*specPower*vec3(1.5,1.2,1.)*shd*NdotL;}{float NdotY=clamp(.5+.5*nor.y,0.,1.);float skyOcc=NdotY*occ;vec3 ambientDiffuse=baseColor*(1.-F0);lin+=ambientDiffuse*skyOcc*vec3(.5,.6,.8)*.5;float RdotY=smoothstep(-.1,.4,ref.y);float skyReflOcc=RdotY*occ;vec3 reflectedSkyCol=vec3(.7,.8,.9)-max(ref.y,0.)*.4;lin+=ks*fresnel*skyReflOcc*reflectedSkyCol*1.;}vec3 shadedColor=lin;shadedColor=mix(shadedColor,skyCol,1.-exp(-.003*t*t*t));finalCol=mix(shadedColor,skyCol,1.-currentAlpha);}return finalCol;}
+
+        // Main Function (Entry Point - Unchanged)
+        void main() {
+            vec2 p = (2.0*gl_FragCoord.xy-iResolution.xy)/iResolution.y;
+            const float fl = 2.5;
+            vec3 rd = u_camMat * normalize( vec3(p,fl) );
+            vec3 col = render( u_camPos, rd );
+            col = pow( col, vec3(0.4545) );
+            gl_FragColor = vec4( clamp(col, 0.0, 1.0), 1.0 );
+        }
+    </script>
+
+    <!-- JavaScript (Handles interaction logic) -->
+    <script>
+        // GL Setup Variables
+        const canvas = document.getElementById('webgl-canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        let program;
+        let positionAttributeLocation;
+        let positionBuffer;
+        let resolutionUniformLocation;
+        let mouseUniformLocation;
+        let camPosUniformLocation;
+        let camMatUniformLocation;
+        let redCubeXZUniformLocation, greenCubeXZUniformLocation, blueCubeXZUniformLocation; // Uniform locs
+
+        // State Variables
+        const mouse = { x: 0, y: 0, prevX: 0, prevY: 0, clickX: 0, clickY: 0, isDown: false };
+        let mouseXParam = 0.0; // Accumulates horizontal drag for camera rotation
+        let draggedObjectId = -1; // Which object is being dragged (-1: background, 2: red, 3: green, 4: blue)
+        let initialDragOffset = [0, 0]; // Offset from cube center to ground intersection point on drag start
+        let initialCubePos = [0, 0];    // Cube's XZ position at the start of a drag
+
+        // Initial Cube Positions (JS side)
+        let redCubeXZ_JS   = [-1.5,  0.0];
+        let greenCubeXZ_JS = [ 0.0, -1.0];
+        let blueCubeXZ_JS  = [ 1.5,  0.0];
+
+        // Config
+        const dragSensitivity = 0.01; // Sensitivity for cube dragging
+        const cameraRotateSensitivity = 0.005; // Sensitivity for camera rotation
+        const pickDistanceThreshold = 0.8; // Max distance from click point on ground to cube center to initiate drag
+
+        // Camera settings
+        const camTarget = [0.0, 0.5, -0.5];
+        const camDist = 5.0;
+        const fixedCamHeight = 1.8;
+
+        // --- Initialization ---
+        if (!gl) { alert('WebGL not supported.'); }
+        else { initWebGL(); setupEventListeners(); requestAnimationFrame(renderLoop); }
+
+        function initWebGL() {
+            // ... (Shader compilation, Program linking - same as before) ...
+            const vertexShaderSource = document.getElementById('vertex-shader').text; const fragmentShaderSource = document.getElementById('fragment-shader').text;
+            const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource); const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+            if (!vertexShader || !fragmentShader) { console.error("Shader compile failed."); return; }
+            program = createProgram(gl, vertexShader, fragmentShader); if (!program) { console.error("Program link failed."); return; }
+
+            // --- Get Locations ---
+            positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+            resolutionUniformLocation = gl.getUniformLocation(program, "iResolution");
+            mouseUniformLocation = gl.getUniformLocation(program, "iMouse");
+            camPosUniformLocation = gl.getUniformLocation(program, "u_camPos");
+            camMatUniformLocation = gl.getUniformLocation(program, "u_camMat");
+            // Get cube position uniform locations
+            redCubeXZUniformLocation = gl.getUniformLocation(program, "u_redCubeXZ");
+            greenCubeXZUniformLocation = gl.getUniformLocation(program, "u_greenCubeXZ");
+            blueCubeXZUniformLocation = gl.getUniformLocation(program, "u_blueCubeXZ");
+
+            // --- Buffer Setup ---
+            positionBuffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            const positions = [-1,1,-1,-1,1,1,1,-1]; gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+            // --- Initial GL State ---
+            resizeCanvas(); gl.useProgram(program); gl.enableVertexAttribArray(positionAttributeLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer); gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        }
+
+        // --- Event Handling ---
+        function setupEventListeners() {
+            window.addEventListener('resize', resizeCanvas);
+
+            canvas.addEventListener('mousedown', (e) => {
+                mouse.isDown = true; const rect = canvas.getBoundingClientRect();
+                mouse.x = e.clientX - rect.left; mouse.y = rect.height - (e.clientY - rect.top) - 1;
+                mouse.clickX = mouse.x; mouse.clickY = mouse.y; mouse.prevX = mouse.x; mouse.prevY = mouse.y;
+
+                // --- Determine what was clicked (Approximate Picking) ---
+                const clickRay = getCameraRay(mouse.x, mouse.y);
+                const groundPoint = intersectRayPlane(clickRay.origin, clickRay.direction, [0, 1, 0], 0); // Intersect with y=0 plane
+
+                draggedObjectId = -1; // Assume background initially
+
+                if (groundPoint) {
+                    // Check distance to each cube's center on the ground plane
+                    const distToRed = vec2Length(vec2Sub(groundPoint, redCubeXZ_JS));
+                    const distToGreen = vec2Length(vec2Sub(groundPoint, greenCubeXZ_JS));
+                    const distToBlue = vec2Length(vec2Sub(groundPoint, blueCubeXZ_JS));
+
+                    let minDist = pickDistanceThreshold;
+
+                    if (distToRed < minDist) { minDist = distToRed; draggedObjectId = 2; initialCubePos = [...redCubeXZ_JS]; }
+                    if (distToGreen < minDist) { minDist = distToGreen; draggedObjectId = 3; initialCubePos = [...greenCubeXZ_JS]; }
+                    if (distToBlue < minDist) { draggedObjectId = 4; initialCubePos = [...blueCubeXZ_JS]; }
+
+                    if (draggedObjectId > 1) {
+                         // Store offset from cube center to where the ground was actually clicked
+                         initialDragOffset = vec2Sub(groundPoint, initialCubePos);
+                         console.log("Dragging Cube:", draggedObjectId);
+                    } else {
+                         console.log("Dragging Background");
+                    }
+                } else {
+                     console.log("Dragging Background (no ground intersection)");
+                }
+
+                updateMouseUniform();
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                mouse.isDown = false;
+                draggedObjectId = -1; // Stop dragging
+                updateMouseUniform();
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = e.clientX - rect.left; mouse.y = rect.height - (e.clientY - rect.top) - 1;
+
+                if (mouse.isDown) {
+                    const deltaX = mouse.x - mouse.prevX;
+                    const deltaY = mouse.y - mouse.prevY;
+
+                    if (draggedObjectId === -1) { // Dragging Background -> Rotate Camera
+                        mouseXParam += deltaX * cameraRotateSensitivity;
+                    } else { // Dragging a Cube
+                        // Find where the current mouse position intersects the ground plane
+                        const currentRay = getCameraRay(mouse.x, mouse.y);
+                        const currentGroundPoint = intersectRayPlane(currentRay.origin, currentRay.direction, [0, 1, 0], 0);
+
+                        if (currentGroundPoint) {
+                            // Calculate the target position for the cube center
+                            const targetCenterPos = vec2Sub(currentGroundPoint, initialDragOffset);
+
+                            // Update the correct cube's JS position
+                            if (draggedObjectId === 2) { redCubeXZ_JS = targetCenterPos; }
+                            else if (draggedObjectId === 3) { greenCubeXZ_JS = targetCenterPos; }
+                            else if (draggedObjectId === 4) { blueCubeXZ_JS = targetCenterPos; }
+                        }
+                    }
+
+                    mouse.prevX = mouse.x; mouse.prevY = mouse.y; // Update previous position
+                    updateMouseUniform();
+                }
+            });
+
+             canvas.addEventListener('mouseout', () => { if(mouse.isDown) { mouse.isDown = false; draggedObjectId = -1; updateMouseUniform(); }});
+        }
+
+        // --- Render Loop ---
+        function renderLoop(timestamp) {
+             if (!program) return;
+
+            // Calculate camera position (ro) and matrix (ca) based on mouseXParam
+            const camAngle = mouseXParam;
+            const ro = [ camTarget[0] + camDist*Math.cos(camAngle), fixedCamHeight, camTarget[2] + camDist*Math.sin(camAngle) ];
+            const ca = setCamera(ro, camTarget, 0.0); // Assuming setCamera helper is defined
+
+            // --- Update Uniforms ---
+            gl.uniform3f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height, 1);
+            updateMouseUniform();
+            gl.uniform3fv(camPosUniformLocation, ro);
+            gl.uniformMatrix3fv(camMatUniformLocation, false, ca);
+            gl.uniform2fv(redCubeXZUniformLocation, redCubeXZ_JS); // Update all cube positions
+            gl.uniform2fv(greenCubeXZUniformLocation, greenCubeXZ_JS);
+            gl.uniform2fv(blueCubeXZUniformLocation, blueCubeXZ_JS);
+
+            // --- Draw ---
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            requestAnimationFrame(renderLoop);
+        }
+
+        // --- Uniform Update & Resize ---
+        function updateMouseUniform() { /* ... unchanged ... */ if (!mouseUniformLocation) return; const cZ=mouse.isDown?mouse.clickX:0; const cW=mouse.isDown?mouse.clickY:0; gl.uniform4f(mouseUniformLocation,mouse.x,mouse.y,cZ,cW); }
+        function resizeCanvas() { /* ... unchanged ... */ const dW=canvas.clientWidth; const dH=canvas.clientHeight; if(canvas.width!==dW||canvas.height!==dH){canvas.width=dW;canvas.height=dH; gl.viewport(0,0,canvas.width,canvas.height); console.log(`Resized: ${dW}x${dH}`);}}
+
+        // --- WebGL Helpers ---
+        function createShader(gl, type, source) { /* ... unchanged ... */ const s=gl.createShader(type); gl.shaderSource(s,source); gl.compileShader(s); if(gl.getShaderParameter(s,gl.COMPILE_STATUS)) return s; console.error(`Shader compile error:\n${gl.getShaderInfoLog(s)}`); gl.deleteShader(s); return null; }
+        function createProgram(gl, vs, fs) { /* ... unchanged ... */ const p=gl.createProgram(); gl.attachShader(p,vs); gl.attachShader(p,fs); gl.linkProgram(p); if(gl.getProgramParameter(p,gl.LINK_STATUS)) return p; console.error(`Program link error:\n${gl.getProgramInfoLog(p)}`); gl.deleteProgram(p); return null; }
+
+        // --- Math & Ray Helpers ---
+        function cross(a, b) { return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+        function sub(a, b) { return [a[0]-b[0], a[1]-b[1], a[2]-b[2]]; }
+        function normalize(v) { const l=Math.sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]); return l>1e-5 ? [v[0]/l, v[1]/l, v[2]/l] : [0,0,0]; }
+        function vec2Length(v) { return Math.sqrt(v[0]*v[0] + v[1]*v[1]); }
+        function vec2Sub(a, b) { return [a[0]-b[0], a[1]-b[1]]; }
+
+        // Calculate view matrix (inverse of camera matrix) - needed for unprojecting ray
+        // This computes the standard lookAt matrix often used in libs
+        function lookAt(eye, center, up) {
+            const z = normalize(sub(eye, center));
+            const x = normalize(cross(up, z));
+            const y = normalize(cross(z, x));
+            // Transposed rotation + negated translation
+            return [ x[0], y[0], z[0], 0,
+                     x[1], y[1], z[1], 0,
+                     x[2], y[2], z[2], 0,
+                     -(x[0]*eye[0] + x[1]*eye[1] + x[2]*eye[2]),
+                     -(y[0]*eye[0] + y[1]*eye[1] + y[2]*eye[2]),
+                     -(z[0]*eye[0] + z[1]*eye[1] + z[2]*eye[2]), 1 ];
+        }
+        // Matrix multiplication (mat4 * vec4)
+        function multiplyMV(m, v) {
+            const [m00,m01,m02,m03, m10,m11,m12,m13, m20,m21,m22,m23, m30,m31,m32,m33] = m;
+            const [vx,vy,vz,vw] = v;
+            return [ m00*vx+m10*vy+m20*vz+m30*vw, m01*vx+m11*vy+m21*vz+m31*vw,
+                     m02*vx+m12*vy+m22*vz+m32*vw, m03*vx+m13*vy+m23*vz+m33*vw ];
+        }
+        // Matrix Inversion (mat4) - Basic, assumes invertible
+         function invert(m) { /* ... complex matrix inversion logic ... */
+            // Placeholder: Inverting a 4x4 matrix is non-trivial.
+            // For a camera matrix (orthonormal rotation + translation),
+            // the inverse is easier: transpose rotation part, negate rotated translation.
+            // Since setCamera gives us the 3x3 rotation, we can adapt.
+             const [m0,m1,m2, m3,m4,m5, m6,m7,m8] = m; // Assuming m is the 3x3 from setCamera flat array
+             // Transpose rotation part
+             const r_inv = [ m0, m3, m6,  m1, m4, m7,  m2, m5, m8 ];
+             return r_inv; // For ray direction, we only need inverse rotation
+         }
+
+
+        // Gets world space ray from camera through a screen pixel (sx, sy in pixels, origin bottom-left)
+        function getCameraRay(sx, sy) {
+            const rect = canvas.getBoundingClientRect();
+            // Normalized Device Coordinates (NDC) [-1, 1]
+            const x = (sx / rect.width) * 2 - 1;
+            const y = (sy / rect.height) * 2 - 1;
+
+            // Current camera properties
+            const camAngle = mouseXParam;
+            const camOrigin = [ camTarget[0] + camDist*Math.cos(camAngle), fixedCamHeight, camTarget[2] + camDist*Math.sin(camAngle) ];
+            const camMatrix3x3 = setCamera(camOrigin, camTarget, 0.0);
+
+            // Unproject using camera matrix (needs inverse)
+            // Ray direction in camera space (before rotation)
+            const fl = 2.5; // Focal length from shader
+            const rayCam = normalize([x * (rect.width / rect.height), y, -fl]); // Adjust x for aspect ratio
+
+            // Transform ray direction to world space using camera orientation
+            // We need to multiply by the original camera matrix (not its inverse)
+            // because setCamera gives world FROM camera axes.
+             const [m0,m1,m2, m3,m4,m5, m6,m7,m8] = camMatrix3x3;
+             const [rx,ry,rz] = rayCam;
+             const rayWorldDir = normalize([
+                 m0*rx + m3*ry + m6*rz,
+                 m1*rx + m4*ry + m7*rz,
+                 m2*rx + m5*ry + m8*rz
+             ]);
+
+            return { origin: camOrigin, direction: rayWorldDir };
+        }
+
+
+        // Intersects a ray with a plane defined by normal and distance from origin
+        function intersectRayPlane(rayOrigin, rayDir, planeNormal, planeDist) {
+            const denom = planeNormal[0]*rayDir[0] + planeNormal[1]*rayDir[1] + planeNormal[2]*rayDir[2]; // dot(planeNormal, rayDir)
+            if (Math.abs(denom) > 1e-6) { // Avoid parallel rays
+                 // distance = -(dot(planeNormal, rayOrigin) + planeDist) / dot(planeNormal, rayDir)
+                 // PlaneDist for y=0 is 0. planeNormal is [0,1,0]. dot(PN, RO) = rayOrigin.y
+                const t = -rayOrigin[1] / denom;
+                if (t >= 0) { // Intersection is in front of the ray origin
+                    return [
+                        rayOrigin[0] + t * rayDir[0],
+                        rayOrigin[1] + t * rayDir[1], // Should be ~0
+                        rayOrigin[2] + t * rayDir[2]
+                    ];
+                }
+            }
+            return null; // No intersection
+        }
+
+        // --- Camera Matrix Calculation (JS version) ---
+        function setCamera(ro_arr, ta_arr, cr) { /* ... unchanged ... */ const cw=normalize(sub(ta_arr,ro_arr)); const cp=[Math.sin(cr),Math.cos(cr),0.0]; const cu=normalize(cross(cw,cp)); const cv=normalize(cross(cu,cw)); return [cu[0],cv[0],cw[0], cu[1],cv[1],cw[1], cu[2],cv[2],cw[2]]; }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformer Attention Explained</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Transformer Self-Attention</h1>
+
+    <div class="narrative" id="narrative-box">
+        <!-- Narrative text will be updated here by JS -->
+        Loading narrative...
+    </div>
+
+    <div class="visualization">
+        <div class="tokens-container" id="tokens-container">
+            <!-- Tokens will be added here by JS -->
+        </div>
+
+        <div class="matrix-container" id="matrix-container">
+            <!-- Attention matrix grid will be added here by JS -->
+            <div class="matrix-labels top-labels" id="top-labels"></div>
+            <div class="matrix-labels side-labels" id="side-labels"></div>
+            <div class="matrix-grid" id="matrix-grid"></div>
+             <div class="calculation-overlay" id="calculation-overlay">
+                <div class="calc-element" id="calc-q">Q</div>
+                <div class="calc-element" id="calc-k">K</div>
+                <div class="calc-element" id="calc-v">V</div>
+                <div class="calc-result" id="calc-result">Score</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="prev-step" disabled>Previous</button>
+        <button id="next-step">Next</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

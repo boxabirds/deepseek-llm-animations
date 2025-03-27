@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simplified Transformer Block</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>Simplified Transformer Decoder Block</h1>
+        <p>This visualization shows the key components of a single Transformer decoder block, simplified with single-head attention. Click the button to toggle between a combined view and an exploded, labelled view.</p>
+
+        <!-- The button to trigger the toggle -->
+        <button id="toggle-button">Explode Blocks</button>
+
+        <!-- The main container for the transformer components -->
+        <div id="transformer-block" class="block combined">
+            <!-- Component 1: Input Embedding + Positional Encoding -->
+            <div class="component input-embedding tooltip">
+                Input Embedding + Positional Encoding
+                <span class="tooltiptext">Represents the input word/token numerically and adds information about its position in the sequence.</span>
+            </div>
+            <!-- Component 2: Self-Attention -->
+            <div class="component self-attention tooltip">
+                (Masked) Single-Head Self-Attention
+                <span class="tooltiptext">Allows the model to weigh the importance of different input tokens when processing a specific token (masked to prevent looking ahead). Simplified to one head.</span>
+            </div>
+            <!-- Component 3: Add & Norm -->
+            <div class="component add-norm tooltip">
+                Add & Norm
+                 <span class="tooltiptext">Adds the output of the previous layer (Attention) to the original input (Residual Connection) and normalizes the result.</span>
+            </div>
+            <!-- Component 4: Feed Forward Network -->
+            <div class="component feed-forward tooltip">
+                Feed Forward Network
+                <span class="tooltiptext">A standard fully connected neural network applied independently to each position.</span>
+            </div>
+            <!-- Component 5: Add & Norm -->
+             <div class="component add-norm tooltip">
+                Add & Norm
+                 <span class="tooltiptext">Adds the output of the previous layer (Feed Forward) to the input of the Feed Forward layer (Residual Connection) and normalizes the result.</span>
+            </div>
+            <!-- Component 6: Linear Layer -->
+             <div class="component linear-layer tooltip">
+                Linear Layer (Prediction Head)
+                <span class="tooltiptext">Projects the final processed token representation into the vocabulary size dimension.</span>
+            </div>
+            <!-- Component 7: Softmax -->
+             <div class="component softmax tooltip">
+                Softmax
+                <span class="tooltiptext">Converts the scores from the Linear Layer into probabilities for each word in the vocabulary, indicating the predicted next word.</span>
+            </div>
+        </div>
+         <p class="note">Note: This is a highly simplified representation. Real Transformers stack multiple blocks, use multi-head attention, and have separate Encoder/Decoder structures (though this shows decoder-like components).</p>
+    </div>
+
+    <!-- Link to the JavaScript file, placed before the closing body tag -->
+    <script src="script.js"></script>
+</body>
+</html>
