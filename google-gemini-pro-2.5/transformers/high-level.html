@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transformer Flow Visualization</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 800px;
+        }
+
+        .input-area {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #inputText {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        #processButton {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #processButton:hover {
+            background-color: #0056b3;
+        }
+         #processButton:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+
+
+        .flow-arrow {
+            text-align: center;
+            font-size: 2em;
+            color: #aaa;
+            margin: 5px 0;
+            opacity: 0; /* Hidden initially */
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .box {
+            border: 2px solid #ccc;
+            background-color: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            min-height: 80px;
+            position: relative;
+            overflow: hidden; /* Clip animations */
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .box h3 {
+            margin-top: 0;
+            text-align: center;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .box-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            align-items: center;
+            min-height: 40px; /* Ensure space for items */
+            position: relative;
+        }
+
+        .token-visual, .embedding-visual, .output-word-visual {
+            background-color: #e0e0e0;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            text-align: center;
+            border: 1px solid #ccc;
+            opacity: 0; /* Start hidden */
+            transition: opacity 0.5s, transform 0.5s;
+            white-space: nowrap; /* Prevent wrapping */
+        }
+
+        .embedding-visual {
+            background-color: #cce5ff; /* Light blue */
+            min-width: 20px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-lr; /* Simulate vector look */
+            text-orientation: mixed;
+            font-size: 0.7em;
+             padding: 2px;
+        }
+
+        .output-word-visual {
+            background-color: #d4edda; /* Light green */
+            font-weight: bold;
+        }
+
+        /* Transformer Internal Structure */
+        .transformer-internal {
+            display: flex;
+            gap: 10px;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .transformer-part {
+            border: 1px dashed #aaa;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            flex: 1; /* Equal initial space */
+            position: relative; /* For pseudo-elements */
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        .transformer-part h4 {
+            margin: 0 0 5px 0;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        #attention {
+            flex-basis: 40%; /* Attention takes less space */
+        }
+
+        #ffn {
+            flex-basis: 60%; /* FFN takes more space */
+            background-color: #f8f9fa; /* Slightly different background */
+        }
+
+        #ffn::before { /* Visual cue for density */
+             content: '';
+             position: absolute;
+             inset: 5px;
+             background: repeating-linear-gradient(
+                45deg,
+                #e9ecef,
+                #e9ecef 3px,
+                #f8f9fa 3px,
+                #f8f9fa 6px
+             );
+             opacity: 0.5;
+             z-index: 0;
+             border-radius: 4px;
+        }
+         #ffn h4, #ffn .complexity-label {
+            position: relative; /* Ensure text is above the pattern */
+            z-index: 1;
+         }
+
+
+        .complexity-label {
+            font-size: 0.8em;
+            color: #dc3545; /* Reddish color for emphasis */
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+        }
+
+        #ffn .complexity-label {
+             color: #007bff; /* Blue color for FFN */
+        }
+
+        /* --- Animations --- */
+
+        .highlight {
+            border-color: #007bff;
+            background-color: #e7f3ff;
+        }
+
+        .processing {
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { background-color: #e7f3ff; }
+            to { background-color: #cce5ff; }
+        }
+
+        .transformer-part.processing {
+             animation: pulse-border 0.5s infinite alternate;
+             transform: scale(1.02);
+        }
+         @keyframes pulse-border {
+            from { box-shadow: 0 0 0px 0px rgba(0, 123, 255, 0.5); }
+            to { box-shadow: 0 0 5px 3px rgba(0, 123, 255, 0.5); }
+        }
+
+
+        /* Used to animate items flowing between boxes */
+        .flow-item {
+            position: absolute;
+            z-index: 10;
+            transition: top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out;
+        }
+
+        .status-subtitle {
+            text-align: center;
+            margin-top: -5px; /* Pull up slightly */
+            margin-bottom: 10px;
+            font-style: italic;
+            color: #666;
+            height: 1.2em; /* Reserve space */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Transformer Flow</h1>
+
+        <div class="input-area">
+            <input type="text" id="inputText" value="The Capital of France is">
+            <button id="processButton">Generate Next Word</button>
+        </div>
+
+        <div class="flow-arrow" id="arrow1">↓</div>
+
+        <div class="box" id="tokenizerBox">
+            <h3>Tokenizer</h3>
+            <div class="box-content" id="tokenizerContent">
+                <!-- Tokens will appear here -->
+            </div>
+             <div class="status-subtitle" id="tokenizerStatus"></div>
+        </div>
+
+        <div class="flow-arrow" id="arrow2">↓</div>
+
+        <div class="box" id="embeddingBox">
+            <h3>Embeddings</h3>
+             <div class="box-content" id="embeddingContent">
+                <!-- Embeddings will appear here -->
+            </div>
+             <div class="status-subtitle" id="embeddingStatus"></div>
+        </div>
+
+        <div class="flow-arrow" id="arrow3">↓</div>
+
+        <div class="box" id="transformerBox">
+            <h3>Transformer Block</h3>
+            <div class="transformer-internal">
+                <div class="transformer-part" id="attention">
+                    <h4>Attention</h4>
+                    <span class="complexity-label">(O(n²))</span>
+                </div>
+                <div class="transformer-part" id="ffn">
+                    <h4>Feed-Forward</h4>
+                    <span class="complexity-label">(Billions of Parameters)</span>
+                </div>
+            </div>
+             <div class="status-subtitle" id="transformerStatus">Processing input sequence...</div>
+        </div>
+
+        <div class="flow-arrow" id="arrow4">↓</div>
+
+        <div class="box" id="outputBox">
+            <h3>Output Projection</h3>
+            <div class="box-content" id="outputContent">
+                <!-- Output word will appear here -->
+            </div>
+             <div class="status-subtitle" id="outputStatus"></div>
+        </div>
+
+         <!-- Feedback loop visual representation -->
+         <div style="height: 30px; width: 100%; position: relative;">
+             <div class="flow-arrow" id="arrowFeedback" style="position: absolute; left: 5%; bottom: 0; transform: rotate(90deg) scale(1, 1.5); "></div>
+             <div style="position: absolute; bottom: 15px; left: 10%; right: 10%; border-bottom: 2px dashed #aaa;"></div>
+             <div class="flow-arrow" id="arrowFeedback2" style="position: absolute; right: 5%; bottom: 0; transform: rotate(-90deg) scale(1, 1.5); "></div>
+        </div>
+
+    </div>
+
+
+    <script>
+        const inputText = document.getElementById('inputText');
+        const processButton = document.getElementById('processButton');
+        const tokenizerBox = document.getElementById('tokenizerBox');
+        const tokenizerContent = document.getElementById('tokenizerContent');
+        const embeddingBox = document.getElementById('embeddingBox');
+        const embeddingContent = document.getElementById('embeddingContent');
+        const transformerBox = document.getElementById('transformerBox');
+        const attentionPart = document.getElementById('attention');
+        const ffnPart = document.getElementById('ffn');
+        const outputBox = document.getElementById('outputBox');
+        const outputContent = document.getElementById('outputContent');
+
+        const arrows = [
+            document.getElementById('arrow1'),
+            document.getElementById('arrow2'),
+            document.getElementById('arrow3'),
+            document.getElementById('arrow4'),
+            document.getElementById('arrowFeedback'),
+            document.getElementById('arrowFeedback2'),
+        ];
+
+        const statuses = {
+            tokenizer: document.getElementById('tokenizerStatus'),
+            embedding: document.getElementById('embeddingStatus'),
+            transformer: document.getElementById('transformerStatus'),
+            output: document.getElementById('outputStatus')
+        }
+
+        const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        // --- Animation Helper ---
+        function createFlowItem(elementToClone, startElement, endElement) {
+            const item = elementToClone.cloneNode(true);
+            item.style.opacity = '1'; // Make it visible for animation
+            item.classList.add('flow-item');
+            document.body.appendChild(item);
+
+            const startRect = startElement.getBoundingClientRect();
+            const endRect = endElement.getBoundingClientRect();
+
+            // Start position (relative to viewport)
+            item.style.position = 'fixed'; // Use fixed for viewport positioning
+            item.style.top = `${startRect.top + startRect.height / 2 - item.offsetHeight / 2}px`;
+            item.style.left = `${startRect.left + startRect.width / 2 - item.offsetWidth / 2}px`;
+            item.style.transition = 'top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Ensure transition is set
+
+            // Trigger reflow to apply start position before transition
+             void item.offsetWidth;
+
+            // End position
+             setTimeout(() => {
+                 item.style.top = `${endRect.top + endRect.height / 2 - item.offsetHeight / 2}px`;
+                 item.style.left = `${endRect.left + endRect.width / 2 - item.offsetWidth / 2}px`;
+                 item.style.opacity = '0'; // Fade out at destination
+             }, 50); // Small delay seems to help consistency
+
+            // Remove the item after animation
+            setTimeout(() => {
+                item.remove();
+            }, 900); // Should be slightly longer than transition duration
+        }
+
+
+        async function runAnimation() {
+            processButton.disabled = true;
+            inputText.disabled = true; // Make input non-editable during animation
+
+            // --- Reset previous state ---
+            tokenizerContent.innerHTML = '';
+            embeddingContent.innerHTML = '';
+            outputContent.innerHTML = '';
+            arrows.forEach(arrow => arrow.style.opacity = 0);
+            Object.values(statuses).forEach(s => s.textContent = '');
+            [tokenizerBox, embeddingBox, transformerBox, outputBox, attentionPart, ffnPart].forEach(el => {
+                el.classList.remove('highlight', 'processing');
+            });
+
+
+            const text = inputText.value.trim();
+            if (!text) {
+                 processButton.disabled = false;
+                 inputText.disabled = false;
+                 return; // Don't run if empty
+            }
+
+            // --- 1. Flow to Tokenizer ---
+            arrows[0].style.opacity = 1;
+            statuses.tokenizer.textContent = 'Receiving text...';
+            await sleep(800); // Time for arrow fade + pause
+
+            tokenizerBox.classList.add('highlight');
+            statuses.tokenizer.textContent = 'Tokenizing...';
+            await sleep(500); // Simulate processing
+
+            // SIMULATED TOKENIZATION (split by space)
+            const tokens = text.split(/\s+/).filter(Boolean); // Filter out empty strings from multiple spaces
+            tokens.forEach((token, i) => {
+                const span = document.createElement('span');
+                span.className = 'token-visual';
+                span.textContent = token;
+                tokenizerContent.appendChild(span);
+                 // Stagger appearance
+                 setTimeout(() => span.style.opacity = 1, i * 50);
+            });
+            tokenizerBox.classList.remove('highlight');
+            statuses.tokenizer.textContent = `Generated ${tokens.length} tokens`;
+            await sleep(500 + tokens.length * 50); // Wait for tokens to appear
+
+            // --- 2. Flow to Embedding ---
+             arrows[1].style.opacity = 1;
+             statuses.embedding.textContent = 'Receiving tokens...';
+             // Animate tokens flowing (optional visual flourish - simplified here)
+             await sleep(800);
+
+             embeddingBox.classList.add('highlight');
+             statuses.embedding.textContent = 'Creating embeddings...';
+             await sleep(500); // Simulate processing
+
+             const embeddingVisuals = [];
+             tokens.forEach((token, i) => {
+                 const div = document.createElement('div');
+                 div.className = 'embedding-visual';
+                 // div.textContent = `E${i}`; // Optional: Label embeddings
+                 div.title = token; // Show original token on hover
+                 embeddingContent.appendChild(div);
+                 embeddingVisuals.push(div);
+                 // Stagger appearance
+                 setTimeout(() => div.style.opacity = 1, i * 50);
+             });
+             embeddingBox.classList.remove('highlight');
+             statuses.embedding.textContent = `Created ${tokens.length} embedding vectors`;
+             await sleep(500 + tokens.length * 50);
+
+            // --- 3. Flow to Transformer ---
+             arrows[2].style.opacity = 1;
+             statuses.transformer.textContent = 'Receiving embeddings...';
+             // Animate embeddings flowing (optional)
+             await sleep(800);
+
+             transformerBox.classList.add('highlight');
+             statuses.transformer.textContent = `Processing sequence (length n=${tokens.length})...`;
+             await sleep(300);
+
+             // 3a. Attention Animation
+             statuses.transformer.textContent = `Calculating Attention (O(n*n) = ${tokens.length*tokens.length} interactions)...`;
+             attentionPart.classList.add('processing');
+             await sleep(1500); // Longer pause for attention emphasis
+             attentionPart.classList.remove('processing');
+             statuses.transformer.textContent = `Attention calculation complete.`;
+             await sleep(500);
+
+             // 3b. Feed-Forward Animation
+             statuses.transformer.textContent = `Processing through Feed-Forward Networks (Billions of Parameters)...`;
+             ffnPart.classList.add('processing');
+             await sleep(1200); // Shorter than attention, but still significant
+             ffnPart.classList.remove('processing');
+
+             transformerBox.classList.remove('highlight');
+             statuses.transformer.textContent = `Generated output embedding.`;
+             await sleep(500);
+
+            // --- 4. Flow to Output Projection ---
+            arrows[3].style.opacity = 1;
+            statuses.output.textContent = 'Receiving final embedding...';
+            // Animate output embedding flowing (optional)
+            await sleep(800);
+
+            outputBox.classList.add('highlight');
+            statuses.output.textContent = 'Decoding to word...';
+            await sleep(500); // Simulate processing
+
+            // SIMULATED OUTPUT WORD
+            const outputWord = "Paris"; // Hardcoded result
+            const wordSpan = document.createElement('span');
+            wordSpan.className = 'output-word-visual';
+            wordSpan.textContent = outputWord;
+            outputContent.appendChild(wordSpan);
+            wordSpan.style.opacity = 1; // Make it visible
+
+            outputBox.classList.remove('highlight');
+            statuses.output.textContent = 'Predicted next word!';
+            await sleep(1000); // Let user see the output word
+
+            // --- 5. Feedback Loop ---
+            statuses.tokenizer.textContent = ''; // Clear old status
+            statuses.embedding.textContent = '';
+            statuses.transformer.textContent = '';
+            statuses.output.textContent = '';
+            arrows[0].style.opacity = 0; // Hide intermediate arrows
+            arrows[1].style.opacity = 0;
+            arrows[2].style.opacity = 0;
+            arrows[3].style.opacity = 0;
+            arrows[4].style.opacity = 1; // Show feedback arrows
+            arrows[5].style.opacity = 1;
+
+            // Animate the word span moving towards the input box
+            const flowWord = wordSpan.cloneNode(true);
+            flowWord.style.opacity = '1';
+            flowWord.classList.add('flow-item');
+            document.body.appendChild(flowWord);
+
+            const startRect = wordSpan.getBoundingClientRect(); // Output box location
+            const endRect = inputText.getBoundingClientRect(); // Input field location
+
+            flowWord.style.position = 'fixed';
+            flowWord.style.transition = 'top 1s ease-in-out, left 1s ease-in-out, opacity 1s ease-in-out';
+            flowWord.style.top = `${startRect.top + startRect.height / 2 - flowWord.offsetHeight / 2}px`;
+            flowWord.style.left = `${startRect.left + startRect.width / 2 - flowWord.offsetWidth / 2}px`;
+
+            void flowWord.offsetWidth; // Trigger reflow
+
+            setTimeout(() => {
+                flowWord.style.top = `${endRect.top + endRect.height / 2 - flowWord.offsetHeight / 2}px`;
+                flowWord.style.left = `${endRect.left + endRect.width / 2 - flowWord.offsetWidth / 2}px`; // Target middle of input
+                flowWord.style.opacity = '0';
+            }, 50);
+
+            await sleep(1100); // Wait for animation to finish
+            flowWord.remove();
+            arrows[4].style.opacity = 0; // Hide feedback arrows
+            arrows[5].style.opacity = 0;
+
+
+            // Append the word to the input
+            inputText.value = inputText.value + " " + outputWord;
+            // Optionally add a space if you want the user to continue typing naturally
+            inputText.value += " ";
+
+
+            // Re-enable input
+            processButton.disabled = false;
+            inputText.disabled = false;
+            inputText.focus(); // Set focus back to input
+             // Scroll to the end of the input text
+             inputText.scrollLeft = inputText.scrollWidth;
+
+
+        }
+
+        processButton.addEventListener('click', runAnimation);
+        inputText.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !processButton.disabled) {
+                runAnimation();
+            }
+        });
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text to Input Embeddings</title>
+    <style>
+        /* Basic page styling */
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+            color: #333;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1, h2 {
+            color: #2c3e50;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 1.4em;
+            margin-top: 30px;
+        }
+
+        code {
+            background-color: #e9ecef;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        /* Step-specific styling */
+        .step {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+
+        .token {
+            display: inline-block;
+            border: 1px solid #ced4da;
+            background-color: #f1f3f5;
+            padding: 5px 10px;
+            margin: 3px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .mapping {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .arrow {
+            font-size: 1.5em;
+            margin: 0 15px;
+            color: #adb5bd;
+        }
+
+        .vocab-id {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #007bff;
+            min-width: 30px; /* Align IDs */
+            text-align: center;
+        }
+
+        .vocab-table {
+            font-size: 0.9em;
+            margin-top: 15px;
+            border-collapse: collapse;
+            width: auto;
+        }
+
+        .vocab-table th, .vocab-table td {
+            border: 1px solid #ddd;
+            padding: 5px 10px;
+            text-align: left;
+        }
+         .vocab-table th {
+            background-color: #f2f2f2;
+         }
+
+        .vector-viz {
+            display: inline-block; /* Display side-by-side */
+            border: 1px solid #ccc;
+            padding: 8px 5px; /* Smaller padding */
+            margin: 5px;
+            border-radius: 3px;
+            font-size: 0.8em; /* Smaller font */
+            min-width: 150px; /* Give some width */
+            text-align: center;
+            vertical-align: middle; /* Align vertically */
+        }
+
+        .token-embedding { background-color: #e7f5ff; border-color: #a5d8ff; }
+        .positional-encoding { background-color: #fff9db; border-color: #ffec99; }
+        .final-embedding { background-color: #e6fcf5; border-color: #96f2d7; font-weight: bold;}
+
+        .math-symbol {
+            font-size: 1.5em;
+            margin: 0 10px;
+            color: #555;
+            display: inline-block; /* Allow vertical alignment */
+            vertical-align: middle;
+        }
+
+        .embedding-step {
+             display: flex;
+             align-items: center;
+             margin: 15px 0;
+             flex-wrap: wrap; /* Allow wrapping on small screens */
+        }
+
+        .final-output .vector-viz {
+             margin-bottom: 10px;
+        }
+
+         p {
+             margin-bottom: 15px;
+         }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Text to Input Embeddings Visualization</h1>
+        <p>This shows how raw text is converted into numerical vectors (embeddings) that include positional information, ready for a Transformer model.</p>
+
+        <!-- Step 1: Input Text -->
+        <div class="step">
+            <h2>1. Input Text</h2>
+            <p>The process starts with the raw input sequence:</p>
+            <code>"The capital of France is"</code>
+        </div>
+
+        <!-- Step 2: Tokenization -->
+        <div class="step">
+            <h2>2. Tokenization</h2>
+            <p>The text is split into individual units called tokens (here, simplified to words, often lowercased):</p>
+            <div>
+                <span class="token">the</span>
+                <span class="token">capital</span>
+                <span class="token">of</span>
+                <span class="token">france</span>
+                <span class="token">is</span>
+            </div>
+            <p style="margin-top: 15px;"><small>Note: Real models often use subword tokenization (like BPE or WordPiece) which can split words like "tokenization" into "token" + "##ization".</small></p>
+        </div>
+
+        <!-- Step 3: Vocabulary Mapping -->
+        <div class="step">
+            <h2>3. Vocabulary Mapping</h2>
+            <p>Each token is mapped to a unique integer ID from a predefined vocabulary:</p>
+            <div class="mapping">
+                <span class="token">the</span> <span class="arrow">→</span> <span class="vocab-id">4</span>
+            </div>
+            <div class="mapping">
+                <span class="token">capital</span> <span class="arrow">→</span> <span class="vocab-id">8</span>
+            </div>
+            <div class="mapping">
+                <span class="token">of</span> <span class="arrow">→</span> <span class="vocab-id">7</span>
+            </div>
+             <div class="mapping">
+                <span class="token">france</span> <span class="arrow">→</span> <span class="vocab-id">9</span>
+            </div>
+             <div class="mapping">
+                <span class="token">is</span> <span class="arrow">→</span> <span class="vocab-id">6</span>
+            </div>
+
+            <p>Resulting sequence of IDs: <code>[4, 8, 7, 9, 6]</code></p>
+
+            <p><small>Example Vocabulary Snippet:</small></p>
+            <table class="vocab-table">
+                <thead><tr><th>Token</th><th>ID</th></tr></thead>
+                <tbody>
+                    <tr><td><PAD></td><td>0</td></tr>
+                    <tr><td><UNK></td><td>1</td></tr>
+                    <tr><td>the</td><td>4</td></tr>
+                    <tr><td>is</td><td>6</td></tr>
+                    <tr><td>of</td><td>7</td></tr>
+                    <tr><td>capital</td><td>8</td></tr>
+                    <tr><td>france</td><td>9</td></tr>
+                     <tr><td>...</td><td>...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Step 4: Embedding Lookup -->
+        <div class="step">
+            <h2>4. Token Embedding Lookup</h2>
+            <p>Each ID is used to look up a corresponding vector from an Embedding Matrix (learned during training). These vectors capture semantic meaning.</p>
+            <div>
+                <div class="vector-viz token-embedding">E[4] ("the")<br/>[0.1, -0.2, ...]</div>
+                <div class="vector-viz token-embedding">E[8] ("capital")<br/>[0.3, 0.1, ...]</div>
+                <div class="vector-viz token-embedding">E[7] ("of")<br/>[-0.5, 0.0, ...]</div>
+                <div class="vector-viz token-embedding">E[9] ("france")<br/>[0.8, 0.7, ...]</div>
+                <div class="vector-viz token-embedding">E[6] ("is")<br/>[-0.1, -0.3, ...]</div>
+            </div>
+            <p style="margin-top:15px;"><small>Each <code>E[id]</code> is a vector, often with hundreds of dimensions (e.g., 512 or 768).</small></p>
+        </div>
+
+        <!-- Step 5: Positional Encoding -->
+        <div class="step">
+            <h2>5. Positional Encoding</h2>
+            <p>Since Transformers don't process tokens sequentially by default, we need to add information about each token's position. A unique positional vector (<code>P[pos]</code>) is generated for each position (0, 1, 2, ...).</p>
+             <div>
+                <div class="vector-viz positional-encoding">P[0] (for "the")<br/>[0.84, 0.54, ...]</div>
+                <div class="vector-viz positional-encoding">P[1] (for "capital")<br/>[0.0, 1.0, ...]</div>
+                <div class="vector-viz positional-encoding">P[2] (for "of")<br/>[0.90, -0.42, ...]</div>
+                <div class="vector-viz positional-encoding">P[3] (for "france")<br/>[0.5, 0.86, ...]</div>
+                <div class="vector-viz positional-encoding">P[4] (for "is")<br/>[1.0, 0.0, ...]</div>
+            </div>
+             <p style="margin-top:15px;"><small>These vectors have the same dimension as the token embeddings and are often calculated using sine/cosine functions or learned.</small></p>
+        </div>
+
+         <!-- Step 6: Addition -->
+        <div class="step">
+            <h2>6. Combine Embeddings</h2>
+            <p>The token embedding and its corresponding positional encoding vector are added together (element-wise) for each position.</p>
+
+            <div class="embedding-step">
+                <div class="vector-viz token-embedding">E[4] ("the")</div>
+                <span class="math-symbol">+</span>
+                <div class="vector-viz positional-encoding">P[0]</div>
+                <span class="math-symbol">=</span>
+                <div class="vector-viz final-embedding">Input Embedding 0</div>
+            </div>
+             <div class="embedding-step">
+                <div class="vector-viz token-embedding">E[8] ("capital")</div>
+                <span class="math-symbol">+</span>
+                <div class="vector-viz positional-encoding">P[1]</div>
+                <span class="math-symbol">=</span>
+                <div class="vector-viz final-embedding">Input Embedding 1</div>
+            </div>
+             <div class="embedding-step">
+                <div class="vector-viz token-embedding">E[7] ("of")</div>
+                <span class="math-symbol">+</span>
+                <div class="vector-viz positional-encoding">P[2]</div>
+                <span class="math-symbol">=</span>
+                <div class="vector-viz final-embedding">Input Embedding 2</div>
+            </div>
+             <div class="embedding-step">
+                <div class="vector-viz token-embedding">E[9] ("france")</div>
+                <span class="math-symbol">+</span>
+                <div class="vector-viz positional-encoding">P[3]</div>
+                <span class="math-symbol">=</span>
+                <div class="vector-viz final-embedding">Input Embedding 3</div>
+            </div>
+             <div class="embedding-step">
+                <div class="vector-viz token-embedding">E[6] ("is")</div>
+                <span class="math-symbol">+</span>
+                <div class="vector-viz positional-encoding">P[4]</div>
+                <span class="math-symbol">=</span>
+                <div class="vector-viz final-embedding">Input Embedding 4</div>
+            </div>
+        </div>
+
+        <!-- Step 7: Final Output -->
+        <div class="step final-output">
+            <h2>7. Final Input Embeddings</h2>
+            <p>This sequence of combined vectors is the final input that gets fed into the first Transformer block (e.g., the Self-Attention layer).</p>
+             <div>
+                <div class="vector-viz final-embedding">Input Embedding 0</div>
+                <div class="vector-viz final-embedding">Input Embedding 1</div>
+                <div class="vector-viz final-embedding">Input Embedding 2</div>
+                <div class="vector-viz final-embedding">Input Embedding 3</div>
+                <div class="vector-viz final-embedding">Input Embedding 4</div>
+            </div>
+        </div>
+
+    </div>
+    <!-- No <script> needed for this static visualization -->
+</body>
+</html>
