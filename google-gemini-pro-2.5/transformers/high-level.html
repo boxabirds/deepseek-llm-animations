@@ -16,8 +16,8 @@
         }
 
         .container {
-            width: 80%;
-            max-width: 800px;
+            width: 85%; /* Slightly wider for matrix */
+            max-width: 900px;
         }
 
         .input-area {
@@ -128,6 +128,7 @@
             gap: 10px;
             justify-content: space-around;
             margin-top: 10px;
+            min-height: 150px; /* Ensure minimum height for matrix */
         }
 
         .transformer-part {
@@ -138,6 +139,8 @@
             flex: 1; /* Equal initial space */
             position: relative; /* For pseudo-elements */
             transition: background-color 0.2s, transform 0.2s;
+            display: flex;
+            flex-direction: column; /* Stack title and content */
         }
 
         .transformer-part h4 {
@@ -147,11 +150,12 @@
         }
 
         #attention {
-            flex-basis: 40%; /* Attention takes less space */
+            flex-basis: 50%; /* Give attention slightly more space for matrix */
+            overflow: auto; /* Allow scrolling if matrix is huge */
         }
 
         #ffn {
-            flex-basis: 60%; /* FFN takes more space */
+            flex-basis: 50%;
             background-color: #f8f9fa; /* Slightly different background */
         }
 
@@ -188,6 +192,65 @@
              color: #007bff; /* Blue color for FFN */
         }
 
+        /* Attention Matrix Styles */
+        .attention-matrix-container {
+            flex-grow: 1; /* Take available space */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            padding: 5px;
+            overflow: hidden; /* Hide overflowing labels if too small */
+        }
+        .attention-matrix {
+            display: grid;
+            /* grid-template-columns and rows set by JS */
+            gap: 1px;
+            background-color: #ccc; /* Grid lines */
+            border: 1px solid #ccc;
+            font-size: 0.6em; /* Smaller font for matrix */
+            max-width: 100%;
+            max-height: 100%;
+            overflow: hidden; /* Prevent content spillover */
+        }
+        .matrix-cell, .matrix-header, .matrix-corner {
+            background-color: #fff;
+            padding: 1px; /* Minimal padding */
+            text-align: center;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis; /* Hide overflow text */
+            min-width: 15px; /* Minimum cell size */
+            min-height: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1;
+        }
+         .matrix-header {
+             background-color: #f0f0f0;
+             font-weight: bold;
+             writing-mode: vertical-lr; /* Vertical Row Headers */
+             text-orientation: mixed;
+         }
+         .matrix-header.col { /* Column headers normal orientation */
+             writing-mode: horizontal-tb;
+             text-orientation: mixed;
+         }
+         .matrix-cell {
+            background-color: #e9f5ff; /* Light blue base */
+            transition: background-color 0.1s ease-out;
+         }
+         .matrix-cell.flashing {
+             background-color: #ffc107; /* Yellow flash */
+             animation: flash-cell 0.3s ease-out forwards;
+         }
+         @keyframes flash-cell {
+            0% { background-color: #ffc107; } /* Start bright yellow */
+            100% { background-color: #90caf9; } /* End slightly darker blue */
+         }
+
+
         /* --- Animations --- */
 
         .highlight {
@@ -196,15 +259,16 @@
         }
 
         .processing {
-            animation: pulse 1s infinite alternate;
+            /* Optional: slightly different pulse for main box */
+             animation: pulse-box 1s infinite alternate;
         }
-
-        @keyframes pulse {
+         @keyframes pulse-box {
             from { background-color: #e7f3ff; }
-            to { background-color: #cce5ff; }
+            to { background-color: #d0e7ff; }
         }
 
-        .transformer-part.processing {
+
+        .transformer-part.processing-border { /* Renamed to avoid conflict */
              animation: pulse-border 0.5s infinite alternate;
              transform: scale(1.02);
         }
@@ -223,12 +287,18 @@
 
         .status-subtitle {
             text-align: center;
-            margin-top: -5px; /* Pull up slightly */
-            margin-bottom: 10px;
+            margin-top: 5px; /* Adjusted margin */
             font-style: italic;
             color: #666;
             height: 1.2em; /* Reserve space */
+            position: relative; /* Keep in flow */
+            width: 100%;
         }
+        /* Specific margin for transformer status to push it down */
+        #transformerBox .status-subtitle {
+             margin-top: 15px;
+        }
+
 
     </style>
 </head>
@@ -246,19 +316,15 @@
 
         <div class="box" id="tokenizerBox">
             <h3>Tokenizer</h3>
-            <div class="box-content" id="tokenizerContent">
-                <!-- Tokens will appear here -->
-            </div>
-             <div class="status-subtitle" id="tokenizerStatus"></div>
+            <div class="box-content" id="tokenizerContent"></div>
+            <div class="status-subtitle" id="tokenizerStatus"></div>
         </div>
 
         <div class="flow-arrow" id="arrow2">↓</div>
 
         <div class="box" id="embeddingBox">
             <h3>Embeddings</h3>
-             <div class="box-content" id="embeddingContent">
-                <!-- Embeddings will appear here -->
-            </div>
+             <div class="box-content" id="embeddingContent"></div>
              <div class="status-subtitle" id="embeddingStatus"></div>
         </div>
 
@@ -270,23 +336,28 @@
                 <div class="transformer-part" id="attention">
                     <h4>Attention</h4>
                     <span class="complexity-label">(O(n²))</span>
+                    <div class="attention-matrix-container">
+                         <div id="attentionMatrix" class="attention-matrix">
+                             <!-- Matrix will be generated here -->
+                         </div>
+                     </div>
                 </div>
                 <div class="transformer-part" id="ffn">
                     <h4>Feed-Forward</h4>
                     <span class="complexity-label">(Billions of Parameters)</span>
                 </div>
             </div>
-             <div class="status-subtitle" id="transformerStatus">Processing input sequence...</div>
+            <!-- Status moved below internal parts -->
+            <div class="status-subtitle" id="transformerStatus"></div>
         </div>
 
         <div class="flow-arrow" id="arrow4">↓</div>
 
-        <div class="box" id="outputBox">
-            <h3>Output Projection</h3>
-            <div class="box-content" id="outputContent">
-                <!-- Output word will appear here -->
-            </div>
-             <div class="status-subtitle" id="outputStatus"></div>
+        <!-- Renamed Box -->
+        <div class="box" id="outputPredictionBox">
+            <h3>Output Prediction</h3>
+            <div class="box-content" id="outputPredictionContent"></div>
+             <div class="status-subtitle" id="outputPredictionStatus"></div>
         </div>
 
          <!-- Feedback loop visual representation -->
@@ -308,9 +379,12 @@
         const embeddingContent = document.getElementById('embeddingContent');
         const transformerBox = document.getElementById('transformerBox');
         const attentionPart = document.getElementById('attention');
+        const attentionMatrixDiv = document.getElementById('attentionMatrix');
         const ffnPart = document.getElementById('ffn');
-        const outputBox = document.getElementById('outputBox');
-        const outputContent = document.getElementById('outputContent');
+        // Renamed elements
+        const outputPredictionBox = document.getElementById('outputPredictionBox');
+        const outputPredictionContent = document.getElementById('outputPredictionContent');
+        const outputPredictionStatus = document.getElementById('outputPredictionStatus');
 
         const arrows = [
             document.getElementById('arrow1'),
@@ -325,41 +399,107 @@
             tokenizer: document.getElementById('tokenizerStatus'),
             embedding: document.getElementById('embeddingStatus'),
             transformer: document.getElementById('transformerStatus'),
-            output: document.getElementById('outputStatus')
+            output: outputPredictionStatus // Updated status reference
         }
 
         const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-        // --- Animation Helper ---
+        // --- Animation Helper (No changes needed here) ---
         function createFlowItem(elementToClone, startElement, endElement) {
-            const item = elementToClone.cloneNode(true);
-            item.style.opacity = '1'; // Make it visible for animation
-            item.classList.add('flow-item');
-            document.body.appendChild(item);
+             // ... (same as before) ...
+             const item = elementToClone.cloneNode(true);
+             item.style.opacity = '1'; // Make it visible for animation
+             item.classList.add('flow-item');
+             document.body.appendChild(item);
 
-            const startRect = startElement.getBoundingClientRect();
-            const endRect = endElement.getBoundingClientRect();
+             const startRect = startElement.getBoundingClientRect();
+             const endRect = endElement.getBoundingClientRect();
 
-            // Start position (relative to viewport)
-            item.style.position = 'fixed'; // Use fixed for viewport positioning
-            item.style.top = `${startRect.top + startRect.height / 2 - item.offsetHeight / 2}px`;
-            item.style.left = `${startRect.left + startRect.width / 2 - item.offsetWidth / 2}px`;
-            item.style.transition = 'top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Ensure transition is set
+             // Start position (relative to viewport)
+             item.style.position = 'fixed'; // Use fixed for viewport positioning
+             item.style.top = `${startRect.top + startRect.height / 2 - item.offsetHeight / 2}px`;
+             item.style.left = `${startRect.left + startRect.width / 2 - item.offsetWidth / 2}px`;
+             item.style.transition = 'top 0.8s ease-in-out, left 0.8s ease-in-out, opacity 0.8s ease-in-out'; // Ensure transition is set
 
-            // Trigger reflow to apply start position before transition
-             void item.offsetWidth;
+             // Trigger reflow to apply start position before transition
+              void item.offsetWidth;
 
-            // End position
+             // End position
+              setTimeout(() => {
+                  item.style.top = `${endRect.top + endRect.height / 2 - item.offsetHeight / 2}px`;
+                  item.style.left = `${endRect.left + endRect.width / 2 - item.offsetWidth / 2}px`;
+                  item.style.opacity = '0'; // Fade out at destination
+              }, 50); // Small delay seems to help consistency
+
+             // Remove the item after animation
              setTimeout(() => {
-                 item.style.top = `${endRect.top + endRect.height / 2 - item.offsetHeight / 2}px`;
-                 item.style.left = `${endRect.left + endRect.width / 2 - item.offsetWidth / 2}px`;
-                 item.style.opacity = '0'; // Fade out at destination
-             }, 50); // Small delay seems to help consistency
+                 item.remove();
+             }, 900); // Should be slightly longer than transition duration
+        }
 
-            // Remove the item after animation
-            setTimeout(() => {
-                item.remove();
-            }, 900); // Should be slightly longer than transition duration
+        // --- Attention Matrix Generation ---
+        function createAttentionMatrix(tokens) {
+            attentionMatrixDiv.innerHTML = ''; // Clear previous matrix
+            const n = tokens.length;
+            if (n === 0) return;
+
+            // Set CSS Grid properties
+            attentionMatrixDiv.style.gridTemplateColumns = `auto repeat(${n}, minmax(15px, 1fr))`;
+            attentionMatrixDiv.style.gridTemplateRows = `auto repeat(${n}, minmax(15px, 1fr))`;
+
+             // Add corner placeholder
+             const corner = document.createElement('div');
+             corner.className = 'matrix-corner';
+             attentionMatrixDiv.appendChild(corner);
+
+             // Add column headers
+             for (let j = 0; j < n; j++) {
+                 const header = document.createElement('div');
+                 header.className = 'matrix-header col';
+                 header.textContent = tokens[j];
+                 header.title = tokens[j]; // Tooltip for long tokens
+                 attentionMatrixDiv.appendChild(header);
+             }
+
+            // Add row headers and cells
+             for (let i = 0; i < n; i++) {
+                 const header = document.createElement('div');
+                 header.className = 'matrix-header row';
+                 header.textContent = tokens[i];
+                 header.title = tokens[i];
+                 attentionMatrixDiv.appendChild(header);
+                 for (let j = 0; j < n; j++) {
+                     const cell = document.createElement('div');
+                     cell.className = 'matrix-cell';
+                     cell.id = `cell-${i}-${j}`; // ID for animation targeting
+                     attentionMatrixDiv.appendChild(cell);
+                 }
+             }
+        }
+
+        // --- Attention Matrix Animation ---
+        async function animateAttentionMatrix(n) {
+            const cells = [];
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    const cell = document.getElementById(`cell-${i}-${j}`);
+                    if (cell) cells.push(cell);
+                }
+            }
+
+            // Simple sequential flash animation
+            const delay = Math.max(10, Math.min(50, 1500 / (n * n))); // Adjust speed based on size
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].classList.add('flashing');
+                // Keep flash brief
+                 setTimeout(() => {
+                     if (cells[i]) cells[i].classList.remove('flashing');
+                 }, 300); // Match CSS animation duration
+                await sleep(delay);
+            }
+             // Ensure all flashing classes are removed eventually
+             await sleep(300);
+             cells.forEach(cell => cell?.classList.remove('flashing'));
         }
 
 
@@ -370,12 +510,16 @@
             // --- Reset previous state ---
             tokenizerContent.innerHTML = '';
             embeddingContent.innerHTML = '';
-            outputContent.innerHTML = '';
+            outputPredictionContent.innerHTML = ''; // Update reset
+            attentionMatrixDiv.innerHTML = ''; // Clear matrix
             arrows.forEach(arrow => arrow.style.opacity = 0);
             Object.values(statuses).forEach(s => s.textContent = '');
-            [tokenizerBox, embeddingBox, transformerBox, outputBox, attentionPart, ffnPart].forEach(el => {
+            [tokenizerBox, embeddingBox, transformerBox, outputPredictionBox, attentionPart, ffnPart].forEach(el => { // Update reset
                 el.classList.remove('highlight', 'processing');
             });
+            // Remove processing-border specifically if used
+             attentionPart.classList.remove('processing-border');
+             ffnPart.classList.remove('processing-border');
 
 
             const text = inputText.value.trim();
@@ -388,152 +532,141 @@
             // --- 1. Flow to Tokenizer ---
             arrows[0].style.opacity = 1;
             statuses.tokenizer.textContent = 'Receiving text...';
-            await sleep(800); // Time for arrow fade + pause
+            await sleep(800);
 
-            tokenizerBox.classList.add('highlight');
+            tokenizerBox.classList.add('highlight', 'processing');
             statuses.tokenizer.textContent = 'Tokenizing...';
-            await sleep(500); // Simulate processing
+            await sleep(500);
 
             // SIMULATED TOKENIZATION (split by space)
-            const tokens = text.split(/\s+/).filter(Boolean); // Filter out empty strings from multiple spaces
+            const tokens = text.split(/\s+/).filter(Boolean);
             tokens.forEach((token, i) => {
                 const span = document.createElement('span');
                 span.className = 'token-visual';
                 span.textContent = token;
                 tokenizerContent.appendChild(span);
-                 // Stagger appearance
-                 setTimeout(() => span.style.opacity = 1, i * 50);
+                setTimeout(() => span.style.opacity = 1, i * 50);
             });
-            tokenizerBox.classList.remove('highlight');
+            tokenizerBox.classList.remove('highlight', 'processing');
             statuses.tokenizer.textContent = `Generated ${tokens.length} tokens`;
-            await sleep(500 + tokens.length * 50); // Wait for tokens to appear
+            await sleep(500 + tokens.length * 50);
 
             // --- 2. Flow to Embedding ---
              arrows[1].style.opacity = 1;
              statuses.embedding.textContent = 'Receiving tokens...';
-             // Animate tokens flowing (optional visual flourish - simplified here)
              await sleep(800);
 
-             embeddingBox.classList.add('highlight');
+             embeddingBox.classList.add('highlight', 'processing');
              statuses.embedding.textContent = 'Creating embeddings...';
-             await sleep(500); // Simulate processing
+             await sleep(500);
 
              const embeddingVisuals = [];
              tokens.forEach((token, i) => {
                  const div = document.createElement('div');
                  div.className = 'embedding-visual';
-                 // div.textContent = `E${i}`; // Optional: Label embeddings
-                 div.title = token; // Show original token on hover
+                 div.title = token;
                  embeddingContent.appendChild(div);
                  embeddingVisuals.push(div);
-                 // Stagger appearance
                  setTimeout(() => div.style.opacity = 1, i * 50);
              });
-             embeddingBox.classList.remove('highlight');
+             embeddingBox.classList.remove('highlight', 'processing');
              statuses.embedding.textContent = `Created ${tokens.length} embedding vectors`;
              await sleep(500 + tokens.length * 50);
 
             // --- 3. Flow to Transformer ---
              arrows[2].style.opacity = 1;
              statuses.transformer.textContent = 'Receiving embeddings...';
-             // Animate embeddings flowing (optional)
              await sleep(800);
 
-             transformerBox.classList.add('highlight');
+             transformerBox.classList.add('highlight'); // Highlight whole block
              statuses.transformer.textContent = `Processing sequence (length n=${tokens.length})...`;
              await sleep(300);
 
              // 3a. Attention Animation
              statuses.transformer.textContent = `Calculating Attention (O(n*n) = ${tokens.length*tokens.length} interactions)...`;
-             attentionPart.classList.add('processing');
-             await sleep(1500); // Longer pause for attention emphasis
-             attentionPart.classList.remove('processing');
+             attentionPart.classList.add('processing-border'); // Use border pulse
+             createAttentionMatrix(tokens); // Generate the matrix
+             await sleep(500); // Pause to see the matrix structure
+             await animateAttentionMatrix(tokens.length); // Animate the cells flashing
+             attentionPart.classList.remove('processing-border');
              statuses.transformer.textContent = `Attention calculation complete.`;
              await sleep(500);
 
              // 3b. Feed-Forward Animation
              statuses.transformer.textContent = `Processing through Feed-Forward Networks (Billions of Parameters)...`;
-             ffnPart.classList.add('processing');
-             await sleep(1200); // Shorter than attention, but still significant
-             ffnPart.classList.remove('processing');
+             ffnPart.classList.add('processing-border'); // Use border pulse
+             await sleep(1200); // Keep FFN pause noticeable
+             ffnPart.classList.remove('processing-border');
 
              transformerBox.classList.remove('highlight');
              statuses.transformer.textContent = `Generated output embedding.`;
              await sleep(500);
 
-            // --- 4. Flow to Output Projection ---
+            // --- 4. Flow to Output Prediction --- // Updated section name
             arrows[3].style.opacity = 1;
             statuses.output.textContent = 'Receiving final embedding...';
-            // Animate output embedding flowing (optional)
             await sleep(800);
 
-            outputBox.classList.add('highlight');
-            statuses.output.textContent = 'Decoding to word...';
-            await sleep(500); // Simulate processing
+            outputPredictionBox.classList.add('highlight', 'processing'); // Update box reference
+            statuses.output.textContent = 'Predicting next word...'; // Update status text
+            await sleep(500);
 
             // SIMULATED OUTPUT WORD
-            const outputWord = "Paris"; // Hardcoded result
+            const outputWord = "Paris";
             const wordSpan = document.createElement('span');
             wordSpan.className = 'output-word-visual';
             wordSpan.textContent = outputWord;
-            outputContent.appendChild(wordSpan);
-            wordSpan.style.opacity = 1; // Make it visible
+            outputPredictionContent.appendChild(wordSpan); // Update content reference
+            wordSpan.style.opacity = 1;
 
-            outputBox.classList.remove('highlight');
+            outputPredictionBox.classList.remove('highlight', 'processing'); // Update box reference
             statuses.output.textContent = 'Predicted next word!';
-            await sleep(1000); // Let user see the output word
+            await sleep(1000);
 
             // --- 5. Feedback Loop ---
-            statuses.tokenizer.textContent = ''; // Clear old status
+            statuses.tokenizer.textContent = '';
             statuses.embedding.textContent = '';
             statuses.transformer.textContent = '';
             statuses.output.textContent = '';
-            arrows[0].style.opacity = 0; // Hide intermediate arrows
-            arrows[1].style.opacity = 0;
-            arrows[2].style.opacity = 0;
-            arrows[3].style.opacity = 0;
-            arrows[4].style.opacity = 1; // Show feedback arrows
-            arrows[5].style.opacity = 1;
+            arrows.forEach((arrow, i) => arrow.style.opacity = i >= 4 ? 1 : 0); // Show feedback arrows, hide others
 
             // Animate the word span moving towards the input box
             const flowWord = wordSpan.cloneNode(true);
-            flowWord.style.opacity = '1';
-            flowWord.classList.add('flow-item');
-            document.body.appendChild(flowWord);
+             // ... (rest of feedback animation code is the same) ...
+             flowWord.style.opacity = '1';
+             flowWord.classList.add('flow-item');
+             document.body.appendChild(flowWord);
 
-            const startRect = wordSpan.getBoundingClientRect(); // Output box location
-            const endRect = inputText.getBoundingClientRect(); // Input field location
+             const startRect = wordSpan.getBoundingClientRect(); // Output box location
+             const endRect = inputText.getBoundingClientRect(); // Input field location
 
-            flowWord.style.position = 'fixed';
-            flowWord.style.transition = 'top 1s ease-in-out, left 1s ease-in-out, opacity 1s ease-in-out';
-            flowWord.style.top = `${startRect.top + startRect.height / 2 - flowWord.offsetHeight / 2}px`;
-            flowWord.style.left = `${startRect.left + startRect.width / 2 - flowWord.offsetWidth / 2}px`;
+             flowWord.style.position = 'fixed';
+             flowWord.style.transition = 'top 1s ease-in-out, left 1s ease-in-out, opacity 1s ease-in-out';
+             flowWord.style.top = `${startRect.top + startRect.height / 2 - flowWord.offsetHeight / 2}px`;
+             flowWord.style.left = `${startRect.left + startRect.width / 2 - flowWord.offsetWidth / 2}px`;
 
-            void flowWord.offsetWidth; // Trigger reflow
+             void flowWord.offsetWidth; // Trigger reflow
 
-            setTimeout(() => {
-                flowWord.style.top = `${endRect.top + endRect.height / 2 - flowWord.offsetHeight / 2}px`;
-                flowWord.style.left = `${endRect.left + endRect.width / 2 - flowWord.offsetWidth / 2}px`; // Target middle of input
-                flowWord.style.opacity = '0';
-            }, 50);
+             setTimeout(() => {
+                 flowWord.style.top = `${endRect.top + endRect.height / 2 - flowWord.offsetHeight / 2}px`;
+                 flowWord.style.left = `${endRect.left + endRect.width / 2 - flowWord.offsetWidth / 2}px`; // Target middle of input
+                 flowWord.style.opacity = '0';
+             }, 50);
 
-            await sleep(1100); // Wait for animation to finish
+            await sleep(1100);
             flowWord.remove();
-            arrows[4].style.opacity = 0; // Hide feedback arrows
+            arrows[4].style.opacity = 0;
             arrows[5].style.opacity = 0;
 
 
             // Append the word to the input
-            inputText.value = inputText.value + " " + outputWord;
-            // Optionally add a space if you want the user to continue typing naturally
-            inputText.value += " ";
+            inputText.value = inputText.value.trimEnd() + " " + outputWord + " "; // Ensure single space before and add trailing space
 
 
             // Re-enable input
             processButton.disabled = false;
             inputText.disabled = false;
-            inputText.focus(); // Set focus back to input
-             // Scroll to the end of the input text
+            inputText.focus();
              inputText.scrollLeft = inputText.scrollWidth;
 
 
